@@ -9,22 +9,6 @@ extern "C" {
 #endif
 /*
  * Class:     com_synthbot_jasiohost_JAsioHost
- * Method:    getDriverNames
- * Signature: ([Ljava/lang/String;)I
- */
-JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_JAsioHost_getDriverNames
-  (JNIEnv *, jclass, jobjectArray);
-
-/*
- * Class:     com_synthbot_jasiohost_JAsioHost
- * Method:    getCurrentDriverIndex
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_JAsioHost_getCurrentDriverIndex
-  (JNIEnv *, jclass);
-
-/*
- * Class:     com_synthbot_jasiohost_JAsioHost
  * Method:    loadDriver
  * Signature: (Ljava/lang/String;)Z
  */
@@ -41,10 +25,26 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_JAsioHost_removeCurrentDriver
 
 /*
  * Class:     com_synthbot_jasiohost_JAsioHost
+ * Method:    getDriverNames
+ * Signature: ([Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_JAsioHost_getDriverNames
+  (JNIEnv *, jclass, jobjectArray);
+
+/*
+ * Class:     com_synthbot_jasiohost_JAsioHost
  * Method:    getCurrentDriverName
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_synthbot_jasiohost_JAsioHost_getCurrentDriverName
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_synthbot_jasiohost_JAsioHost
+ * Method:    getCurrentDriverIndex
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_JAsioHost_getCurrentDriverIndex
   (JNIEnv *, jclass);
 
 #ifdef __cplusplus

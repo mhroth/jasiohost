@@ -75,5 +75,16 @@ public class JAsioHost {
 		asioDriver.openControlPanel();
 		asioDriver.start();
 	}
+	
+	/**
+	 * Shutdown the currently loaded ASIO driver, regardless of what state it is in. Unload it from
+	 * memory. If no driver is loaded, this method has no effect.
+	 */
+	public static void shutdownAndUnloadDriver() {
+	  if (asioDriver != null) {
+	    asioDriver.shutdown();
+	  }
+	  JAsioHost.removeCurrentDriver();
+	}
 
 }

@@ -296,6 +296,24 @@ public class AsioDriver {
   }
   private static native void ASIOStop();
   
+  /**
+   * Shut down the driver, regardless of what state it is in. Return it to the LOADED state.
+   */
+  protected void shutdown() {
+    switch (state) {
+      case RUNNING: {
+        stop();
+        // allow fall-throughs
+      }
+      case PREPARED: {
+        disposeBuffers();
+      }
+      case INITIALIZED: {
+        exit();
+      }
+    }
+  }
+  
   
   /*
    * Callbacks
