@@ -2,3 +2,5 @@ JAsioHost is a Java ASIO host, meant to reduce input and output audio
 latency in Java (considering that the Java Sound API is quite slow). 
 There is nothing to see here yet, but once basic functionality has been 
 reasonably implemented, a first commit will be submitted.
+
+NOTE: Yes, there are files here. No, they dion't work. Until this note is updated, the files here are under extreme development. However, id you are really desperate, probably something will work for you.
