@@ -64,9 +64,9 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved) {
 // from ASIOv2
 ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool directProcess) {
   JNIEnv *env = NULL;
-  jvm->AttachCurrentThread((void **) &env, NULL);
+  jvm->AttachCurrentThreadAsDaemon((void **) &env, NULL);
+  /*
   if (env != NULL) {
-    /*
       get primitive input java array
       copy input into it
       release java array
@@ -92,7 +92,7 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
         // reverseEndian() on all samples
       }
     }
-    */
+    
     
     // ASIOOutputReady(); // not sure if this is really necessary in windows
   }
@@ -106,7 +106,7 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
           env->GetStaticFieldID(env->FindClass("java/lang/System"), "out", "Ljava/io/PrintStream;")), 
       env->GetMethodID(env->FindClass("java/io/PrintStream"), "println", "(Ljava/lang/String;)V"), 
       "boo!");
-  
+  */
   return NULL; // dunno what to do with this yet...
 }
 
@@ -122,6 +122,7 @@ void bufferSwitch(long bufferIndex, ASIOBool directProcess) {
 }
 
 void sampleRateDidChange(ASIOSampleRate sampleRate) {
+  /*
   JNIEnv *env = NULL;
   jvm->AttachCurrentThread((void **) &env, NULL);
   if (env != NULL) {
@@ -131,6 +132,7 @@ void sampleRateDidChange(ASIOSampleRate sampleRate) {
       (jdouble) sampleRate);
   }
   jvm->DetachCurrentThread();
+  */
 }
 
 long asioMessage(long selector, long value, void* message, double* opt) {
@@ -158,6 +160,7 @@ long asioMessage(long selector, long value, void* message, double* opt) {
     }
       
     case kAsioResetRequest: {
+      /*
       JNIEnv *env = NULL;
       jvm->AttachCurrentThread((void **) &env, NULL);
       if (env != NULL) {
@@ -166,10 +169,12 @@ long asioMessage(long selector, long value, void* message, double* opt) {
             env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireResetRequest", "()V"));
       }
       jvm->DetachCurrentThread();
+      */
       return 1L;
     }
       
     case kAsioResyncRequest: {
+      /*
       JNIEnv *env = NULL;
       jvm->AttachCurrentThread((void **) &env, NULL);
       if (env != NULL) {
@@ -178,11 +183,13 @@ long asioMessage(long selector, long value, void* message, double* opt) {
             env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireResyncRequest", "()V"));
       }
       jvm->DetachCurrentThread();
+      */
       return 1L;
     }
       
     case kAsioLatenciesChanged: {
       JNIEnv *env = NULL;
+      /*
       jvm->AttachCurrentThread((void **) &env, NULL);
       if (env != NULL) {
         env->CallVoidMethod(
@@ -192,6 +199,7 @@ long asioMessage(long selector, long value, void* message, double* opt) {
             Java_com_synthbot_jasiohost_AsioDriver_ASIOGetLatencies(NULL, NULL, JNI_FALSE));
       }
       jvm->DetachCurrentThread();
+      */
       return 1L;
     }
       
