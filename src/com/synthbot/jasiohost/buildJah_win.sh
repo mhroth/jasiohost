@@ -11,7 +11,8 @@ gcc -mno-cygwin -D__int64="long long" -o jasiohost.dll -shared -O3 -w -Wl,--add-
 ./ASIOSDK2/common/*.cpp \
 ./ASIOSDK2/host/*.cpp \
 ./ASIOSDK2/host/pc/*.cpp \
--lstdc++ -lole32 -luuid
+-L/cygdrive/c/Java/jdk1.6.0_12/lib \
+-lstdc++ -lole32 -luuid -ljvm
 
 ls -l jasiohost.dll
 echo copying jasiohost.dll to C:/WINDOWS/system32

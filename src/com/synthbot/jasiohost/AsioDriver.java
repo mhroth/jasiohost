@@ -37,6 +37,21 @@ public class AsioDriver {
     System.loadLibrary("jasiohost");
   }
   
+  /*
+   * Normally JAsioHost shuts down the driver. But it is put into finalize() in order to properly
+   * shut down the driver in case the JVM is otherwise shut down.
+   * (non-Javadoc)
+   * @see java.lang.Object#finalize()
+   */
+  @Override
+  protected void finalize() throws Throwable {
+    try {
+      shutdown();
+    } finally {
+      super.finalize();
+    }
+  }
+  
   /**
    * Returns the current state of the ASIO driver.
    */
@@ -319,7 +334,7 @@ public class AsioDriver {
    * Callbacks
    */
   
-  // note the synchronization issues in using the list
+  // TODO: note the synchronization issues in using the list
   public void addAsioDriverListener(AsioDriverListener listener) {
     if (!listeners.contains(listener)) {
       listeners.add(listener);
