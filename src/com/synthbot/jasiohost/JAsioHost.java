@@ -99,11 +99,11 @@ public class JAsioHost {
 		AsioDriver asioDriver = JAsioHost.getAsioDriver(driverNameList.get(0));
 		//asioDriver.openControlPanel();
 		asioDriver.createBuffers(0, 2, asioDriver.getBufferPreferredSize());
-		asioDriver.start();
-		try {
-			Thread.sleep(2000);
-		} catch (Exception e) {
-			e.printStackTrace(System.err);
+		for (int i = 0; i < asioDriver.getNumChannelsInput(); i++) {
+			System.out.println(asioDriver.getChannelInfoInput(i));			
+		}
+		for (int i = 0; i < asioDriver.getNumChannelsOutput(); i++) {
+			System.out.println(asioDriver.getChannelInfoOutput(i));			
 		}
 		JAsioHost.shutdownAndUnloadDriver();
 	}

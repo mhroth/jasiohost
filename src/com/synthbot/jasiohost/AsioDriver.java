@@ -47,6 +47,7 @@ public class AsioDriver {
   protected void finalize() throws Throwable {
     try {
       shutdown();
+      JAsioHost.shutdownAndUnloadDriver(); // to get out of LOADED state?
     } finally {
       super.finalize();
     }
@@ -178,9 +179,9 @@ public class AsioDriver {
   
   /**
    * Note: As ASIOGetLatencies() will also have to include the audio buffer size of the 
-   * ASIOCreateBuffers() call, the application has to call this function after the buffer creation. 
+   * ASIOCreateBuffers() call, the application should call this function after the buffer creation. 
    * In the case that the call occurs beforehand the driver should assume preferred buffer size. 
-   * @return
+   * @return  The input latency in samples.
    */
   public int getLatencyInput() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
@@ -189,6 +190,10 @@ public class AsioDriver {
     return ASIOGetLatencies(true);
   }
   
+  /**
+   * 
+   * @return  The output latency in samples.
+   */
   public int getLatencyOutput() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
@@ -247,10 +252,11 @@ public class AsioDriver {
   private static native AsioChannelInfo ASIOGetChannelInfo(int index, boolean isInput);
   
   /**
-   * 
    * @param numInputs
    * @param numOutputs
    * @param bufferSize
+   * TODO: should probably designate a Set or List of ChannelInfo objects in order to
+   * designate which channels should have buffers
    */
   public void createBuffers(int numInputs, int numOutputs, int bufferSize) {
     if (!AsioDriverState.INITIALIZED.equals(state)) {
