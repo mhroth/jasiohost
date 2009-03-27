@@ -240,6 +240,12 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOInit
       env->NewStringUTF(asioDriverInfo.errorMessage));
 }
 
+JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOExit
+(JNIEnv *env, jclass clazz) {
+
+  ASIOExit();
+}
+
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_JAsioHost_removeCurrentDriver
 (JNIEnv *env, jclass clazz) {
 
