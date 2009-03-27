@@ -72,7 +72,7 @@ public class AsioDriver {
     state = AsioDriverState.INITIALIZED;
     return ASIOInit();
   }
-  private static native AsioDriverInfo ASIOInit();
+  private native AsioDriverInfo ASIOInit();
   
   /**
    * ASIOExit
@@ -84,7 +84,7 @@ public class AsioDriver {
     ASIOExit();
     state = AsioDriverState.LOADED;
   }
-  private static native void ASIOExit();
+  private native void ASIOExit();
   
   /**
    * Open the native control panel, allowing the user to adjust the ASIO settings. A control panel

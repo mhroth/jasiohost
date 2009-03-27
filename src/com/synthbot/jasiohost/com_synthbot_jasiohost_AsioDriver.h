@@ -13,7 +13,7 @@ extern "C" {
  * Signature: ()Lcom/synthbot/jasiohost/AsioDriverInfo;
  */
 JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOInit
-  (JNIEnv *, jclass);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_synthbot_jasiohost_AsioDriver
@@ -21,7 +21,7 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOInit
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOExit
-  (JNIEnv *, jclass);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_synthbot_jasiohost_AsioDriver
