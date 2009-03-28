@@ -67,13 +67,11 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
   JNIEnv *env = NULL;
   jint res = jvm->AttachCurrentThreadAsDaemon((void **) &env, NULL);
   if (res == JNI_OK && env != NULL) {
-    // GO SPEED RACER GO!
-    // almost...
-    /*
-    env->CallStaticVoidMethod(
-      env->FindClass("com/synthbot/jasiohost/AsioDriver"),
-      env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "testMe", "()V"));
-    */
+    env->CallVoidMethod(
+        jAsioDriver,
+        env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireBufferSwitch", "([[I[[I)V"),
+        NULL,
+        NULL);
   }
   /*
   if (env != NULL) {
