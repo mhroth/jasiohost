@@ -21,7 +21,9 @@
 package com.synthbot.jasiohost;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class JAsioHost {
 	
@@ -97,13 +99,16 @@ public class JAsioHost {
 	public static void main(String[] args) {
 		List<String> driverNameList = JAsioHost.getDriverNames();
 		AsioDriver asioDriver = JAsioHost.getAsioDriver(driverNameList.get(0));
-		//asioDriver.openControlPanel();
-		asioDriver.createBuffers(0, 2, asioDriver.getBufferPreferredSize());
-		for (int i = 0; i < asioDriver.getNumChannelsInput(); i++) {
-			System.out.println(asioDriver.getChannelInfoInput(i));			
-		}
-		for (int i = 0; i < asioDriver.getNumChannelsOutput(); i++) {
-			System.out.println(asioDriver.getChannelInfoOutput(i));			
+		asioDriver.openControlPanel();
+		Set<AsioChannelInfo> channelSet = new HashSet<AsioChannelInfo>();
+		channelSet.add(asioDriver.getChannelInfoOutput(0));
+		channelSet.add(asioDriver.getChannelInfoOutput(1));
+		asioDriver.createBuffers(channelSet, asioDriver.getBufferPreferredSize());
+//		asioDriver.start();
+		try {
+			Thread.sleep(1000);
+		} catch (Exception e) {
+			// ???
 		}
 		JAsioHost.shutdownAndUnloadDriver();
 	}
