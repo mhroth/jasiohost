@@ -22,14 +22,23 @@ package com.synthbot.jasiohost;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class AsioDriver {
   
-  private AsioDriverState state;
+  protected AsioDriverState state;
   private List<AsioDriverListener> listeners;
+  private final Runnable resetRunnable;
+  
   
   protected AsioDriver() {
     state = AsioDriverState.LOADED;
+    final AsioDriver asioDriver = this;
+    resetRunnable = new Runnable() {
+      public void run() {
+        asioDriver.reset();
+      }
+    };
     listeners = new ArrayList<AsioDriverListener>();
   }
   
@@ -251,35 +260,74 @@ public class AsioDriver {
   }
   private static native AsioChannelInfo ASIOGetChannelInfo(int index, boolean isInput);
   
-  /**
-   * @param numInputs
-   * @param numOutputs
-   * @param bufferSize
-   * TODO: should probably designate a Set or List of ChannelInfo objects in order to
-   * designate which channels should have buffers
-   */
-  public void createBuffers(int numInputs, int numOutputs, int bufferSize) {
+  public void createBuffers(Set<AsioChannelInfo> channelsToInit, int bufferSize) {
     if (!AsioDriverState.INITIALIZED.equals(state)) {
       throw new IllegalStateException();
     }
-    if (numInputs < 0 || numInputs >= getNumChannelsInput()) {
-      throw new IllegalArgumentException();
-    }
-    if (numOutputs < 0 || numOutputs >= getNumChannelsOutput()) {
-      throw new IllegalArgumentException();
-    }
-    if ((bufferSize - getBufferMinSize()) % this.getBufferGranularity() != 0) {
-      throw new IllegalArgumentException();
-    }
+	  if (channelsToInit == null) {
+	    throw new NullPointerException();
+	  }
+	  if (channelsToInit.contains(null)) {
+	    throw new IllegalArgumentException();
+	  }
+//  if ((bufferSize - getBufferMinSize()) % this.getBufferGranularity() != 0) {
+//    throw new IllegalArgumentException();
+//  }
     /* ???
     if (bufferSize != this.getBufferPreferredSize()) {
       throw new IllegalArgumentException();
     }
     */
-    ASIOCreateBuffers(numInputs, numOutputs, bufferSize);
-    state = AsioDriverState.PREPARED;
+	  int[][] inputIntArrays = new int[getNumChannelsInput()][];
+	  int[][] outputIntArrays = new int[getNumChannelsOutput()][];
+	  float[][] inputFloatArrays = new float[getNumChannelsInput()][];
+	  float[][] outputFloatArrays = new float[getNumChannelsOutput()][];
+    double[][] inputDoubleArrays = new double[getNumChannelsInput()][];
+    double[][] outputDoubleArrays = new double[getNumChannelsOutput()][];
+    for (AsioChannelInfo channelInfo : channelsToInit) {
+      switch (channelInfo.getSampleType()) {
+        case ASIOSTFloat32MSB:
+        case ASIOSTFloat32LSB: {
+          (channelInfo.isInput() ? inputFloatArrays : outputFloatArrays)[channelInfo.getChannelIndex()] =  new float[bufferSize];
+          break;
+        }
+        case ASIOSTFloat64MSB:
+        case ASIOSTFloat64LSB: {
+          (channelInfo.isInput() ? inputDoubleArrays : outputDoubleArrays)[channelInfo.getChannelIndex()] =  new double[bufferSize];
+          break;
+        }
+        case ASIOSTInt32MSB:
+        case ASIOSTInt32MSB16:
+        case ASIOSTInt32MSB18:
+        case ASIOSTInt32MSB20:
+        case ASIOSTInt32MSB24:
+        case ASIOSTInt32LSB:
+        case ASIOSTInt32LSB16:
+        case ASIOSTInt32LSB18:
+        case ASIOSTInt32LSB20:
+        case ASIOSTInt32LSB24:{
+          (channelInfo.isInput() ? inputIntArrays : outputIntArrays)[channelInfo.getChannelIndex()] =  new int[bufferSize];
+          break;
+        }
+        default: {
+          System.err.println("WARNING: Sample type " + channelInfo.getSampleType().toString() + " is not supported.");
+        }
+      }
+    }
+    
+	  ASIOCreateBuffers(
+	      channelsToInit.toArray(new AsioChannelInfo[0]), bufferSize,
+	      inputIntArrays, outputIntArrays,
+	      inputFloatArrays, outputFloatArrays,
+	      inputDoubleArrays, outputDoubleArrays);
+	  
+	  state = AsioDriverState.PREPARED;
   }
-  private static native void ASIOCreateBuffers(int numInputs, int numOutputs, int bufferSize);
+  private static native void ASIOCreateBuffers(
+      AsioChannelInfo[] channelsToInit, int bufferSize,
+      int[][] inputInt, int[][] outputInt,
+      float[][] inputFloat, float[][] outputFloat,
+      double[][] inputDouble, double[][] outputDouble);
   
   /**
    * 
@@ -360,11 +408,22 @@ public class AsioDriver {
   }
   
   @SuppressWarnings("unused")
-  private void fireResetRequest() {
+  private synchronized void fireResetRequest() {
     System.out.println("resetRequest @ " + Long.toString(System.currentTimeMillis()));
+    /*
+     * Start the reset thread, which will block because the current thread 
+     * owns the lock on the AsioDriver object. It will reset the driver once this
+     * method has exited.
+     */
+    new Thread(resetRunnable).start();
     for (AsioDriverListener listener : listeners) {
       listener.resetRequest();
     }
+  }
+  
+  private synchronized void reset() {
+    shutdown();
+    init();
   }
   
   @SuppressWarnings("unused")
@@ -384,27 +443,14 @@ public class AsioDriver {
   }
   
   @SuppressWarnings("unused")
-  private void fireBufferSwitch(int[][] inputs, int[][] outputs) {
+  private void fireBufferSwitch(int[][] inputInt, int[][] outputInt,
+		                        float[][] inputFloat, float[][] outputFloat,
+		                        double[][] inputDouble, double[][] outputDouble) {
     System.out.println("bufferSwitch @ " + Long.toString(System.currentTimeMillis()));
     for (AsioDriverListener listener : listeners) {
-      listener.bufferSwitch(inputs, outputs);
+      listener.bufferSwitch(inputInt, outputInt,
+    		                inputFloat, outputFloat,
+    		                inputDouble, outputDouble);
     }
   }
-  
-  @SuppressWarnings("unused")
-  private void fireBufferSwitch(float[][] inputs, float[][] outputs) {
-    System.out.println("bufferSwitch @ " + Long.toString(System.currentTimeMillis()));
-    for (AsioDriverListener listener : listeners) {
-      listener.bufferSwitch(inputs, outputs);
-    }
-  }
-  
-  @SuppressWarnings("unused")
-  private void fireBufferSwitch(double[][] inputs, double[][] outputs) {
-    System.out.println("bufferSwitch @ " + Long.toString(System.currentTimeMillis()));
-    for (AsioDriverListener listener : listeners) {
-      listener.bufferSwitch(inputs, outputs);
-    }
-  }
-
 }

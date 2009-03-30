@@ -30,16 +30,11 @@ public interface AsioDriverListener {
   
   public void latenciesChanged(int inputLatency, int outputLatency);
 
-  /*
-   * bufferSwitch variants depending on the sample type
-   */
   /**
    * @param input  The input buffer is filled with new data from the driver.
    * @param output  The output buffer should be filled with data to be sent to the driver.
    */
-  public void bufferSwitch(int[][] input, int[][] output);
-
-  public void bufferSwitch(float[][] input, float[][] output);
-
-  public void bufferSwitch(double[][] input, double[][] output);
+  public void bufferSwitch(int[][] inputInt, int[][] outputInt,
+		                   float[][] inputFloat, float[][] outputFloat,
+		                   double[][] inputDouble, double[][] outputDouble);
 }

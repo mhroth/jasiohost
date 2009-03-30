@@ -29,7 +29,7 @@ public class AsioChannelInfo {
   private final AsioSampleType sampleType;
   private final String name;
   
-  protected AsioChannelInfo(int index, boolean isInput, boolean isActive, int channelGroup, AsioSampleType sampleType, String name) {
+  private AsioChannelInfo(int index, boolean isInput, boolean isActive, int channelGroup, AsioSampleType sampleType, String name) {
     this.index = index;
     this.isInput = isInput;
     this.isActive = isActive;
@@ -61,6 +61,27 @@ public class AsioChannelInfo {
   public String getChannelName() {
     return name;
   }
+
+  /*
+   * equals() is overridden such that it may be used in a Set
+   */
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof AsioChannelInfo)) {
+      return false;
+    } else {
+      AsioChannelInfo channelInfo = (AsioChannelInfo) o;
+      return (channelInfo.getChannelIndex() == index && channelInfo.isInput() == isInput);
+    }
+  }
+  
+  /*
+   * hashCode() overridden in order to accompany equals()
+   */
+  @Override
+  public int hashCode() {
+    return isInput ? index : ~index + 1; // : 2's complement
+  }
   
   @Override
   public String toString() {
@@ -76,6 +97,5 @@ public class AsioChannelInfo {
 	sb.append("  active: "); sb.append(Boolean.toString(isActive));
 	sb.append("\n");
 	return sb.toString();
-  }
-  
+  }  
 }
