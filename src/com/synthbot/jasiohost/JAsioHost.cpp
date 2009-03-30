@@ -97,7 +97,7 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
         bufferVars.inputIntArrays, bufferVars.outputIntArrays,
         bufferVars.inputFloatArrays, bufferVars.outputFloatArrays,
         bufferVars.inputDoubleArrays, bufferVars.outputDoubleArrays);
-        
+    /*
     for (int i = 0; i < bufferVars.numInitedChannels; i++) {
       if (bufferVars.bufferInfos[i].isInput == ASIOFalse) { // copy output to native arrays
         switch (bufferVars.sampleTypes[i]) {
@@ -139,6 +139,7 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
         }
       }
     }
+    */
   }
   return NULL; // dunno what to do with this yet...
 }
@@ -457,12 +458,12 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
     bufferVars.sampleTypes[i] = ASIOSTInt32LSB;
   }
 
-  bufferVars.inputIntArrays = inputIntArrays;
-  bufferVars.outputIntArrays = outputIntArrays;
-  bufferVars.inputFloatArrays = inputFloatArrays;
-  bufferVars.outputFloatArrays = outputFloatArrays;
-  bufferVars.inputDoubleArrays = inputDoubleArrays;
-  bufferVars.outputDoubleArrays = outputDoubleArrays;
+  bufferVars.inputIntArrays = (jobjectArray) env->NewGlobalRef(inputIntArrays);
+  bufferVars.outputIntArrays = (jobjectArray) env->NewGlobalRef(outputIntArrays);
+  bufferVars.inputFloatArrays = (jobjectArray) env->NewGlobalRef(inputFloatArrays);
+  bufferVars.outputFloatArrays = (jobjectArray) env->NewGlobalRef(outputFloatArrays);
+  bufferVars.inputDoubleArrays = (jobjectArray) env->NewGlobalRef(inputDoubleArrays);
+  bufferVars.outputDoubleArrays = (jobjectArray) env->NewGlobalRef(outputDoubleArrays);
   
   bufferVars.bufferSize = (int) bufferSize;
   
@@ -479,6 +480,12 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIODisposeBuffers
 (JNIEnv *env, jclass clazz) {
 
   // need to free bufferVars? YES!!!
+  env->DeleteGlobalRef(bufferVars.inputIntArrays);
+  env->DeleteGlobalRef(bufferVars.outputIntArrays);
+  env->DeleteGlobalRef(bufferVars.inputFloatArrays);
+  env->DeleteGlobalRef(bufferVars.outputFloatArrays);
+  env->DeleteGlobalRef(bufferVars.inputDoubleArrays);
+  env->DeleteGlobalRef(bufferVars.outputDoubleArrays);
   
   ASIODisposeBuffers();
 }
