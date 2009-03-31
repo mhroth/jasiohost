@@ -1,3 +1,23 @@
+/*
+ *  Copyright 2009 Martin Roth (mhroth@gmail.com)
+ * 
+ *  This file is part of JAsioHost.
+ *
+ *  JVstHost is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  JVstHost is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with JAsioHost.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package com.synthbot.jasiohost;
 
 import java.util.HashSet;
@@ -33,20 +53,15 @@ public class ExampleHost implements AsioDriverListener {
     asioDriver.start();
   }
   
-  public void shutdown() {
-    JAsioHost.shutdownAndUnloadDriver();
-  }
-  
   public void bufferSwitch(
       int[][] inputInt, int[][] outputInt, 
       float[][] inputFloat, float[][] outputFloat, 
       double[][] inputDouble, double[][] outputDouble) {
 
-    for (int i = sampleIndex; i < sampleIndex+bufferSize; i++) {
-      outputInt[0][i] = (int) (Math.sin(2 * Math.PI * i * 440.0 / sampleRate) * (double) Integer.MAX_VALUE);
+    for (int i = 0; i < bufferSize; i++, sampleIndex++) {
+      outputInt[0][i] = (int) (Math.sin(2 * Math.PI * sampleIndex * 440.0 / sampleRate) * (double) Integer.MAX_VALUE);
     }
     System.arraycopy(outputInt[0], 0, outputInt[1], 0, bufferSize);
-    sampleIndex += bufferSize;
   }
 
   public void latenciesChanged(int inputLatency, int outputLatency) {
@@ -71,10 +86,15 @@ public class ExampleHost implements AsioDriverListener {
   
   public static void main(String[] args) {
     ExampleHost host = new ExampleHost();
-    //host.openControlPanel();
+    host.openControlPanel();
+    try {
+      Thread.sleep(5000);
+    } catch (Exception e) {
+      // ???
+    }
     host.start();
     try {
-      Thread.sleep(1000);
+      Thread.sleep(2000);
     } catch (Exception e) {
       // ???
     }

@@ -27,6 +27,8 @@
 #include "com_synthbot_jasiohost_JAsioHost.h"
 #include "com_synthbot_jasiohost_AsioDriver.h"
 
+#define JNI_VERSION JNI_VERSION_1_4
+
 // external reference
 extern AsioDrivers* asioDrivers;
 bool loadAsioDriver(char *name);
@@ -34,6 +36,7 @@ bool loadAsioDriver(char *name);
 // global variables
 JavaVM *jvm;
 jobject jAsioDriver; // a strong global reference to the AsioDriver Java object for use in callbacks
+jmethodID fireBufferSwitchMid;
 typedef struct BufferVars {
   ASIOBufferInfo *bufferInfos;
   ASIOSampleType *sampleTypes;
@@ -62,7 +65,11 @@ int reverseBytes(int i) {
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *localJvm, void *reserved) {  
   jvm = localJvm; // store the JVM so that it can be used to attach ASIO threads to the JVM during callbacks
   asioDrivers = new AsioDrivers(); // set the global variable
-  return JNI_VERSION_1_4;
+  
+  JNIEnv *env = NULL;
+  jvm->GetEnv((void **) &env, JNI_VERSION);
+  fireBufferSwitchMid = env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireBufferSwitch", "([[I[[I[[F[[F[[D[[D)V");
+  return JNI_VERSION;
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved) {
@@ -93,11 +100,11 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
 
     env->CallVoidMethod(
         jAsioDriver,
-        env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireBufferSwitch", "([[I[[I[[F[[F[[D[[D)V"),
+        fireBufferSwitchMid,
         bufferVars.inputIntArrays, bufferVars.outputIntArrays,
         bufferVars.inputFloatArrays, bufferVars.outputFloatArrays,
         bufferVars.inputDoubleArrays, bufferVars.outputDoubleArrays);
-    /*
+
     for (int i = 0; i < bufferVars.numInitedChannels; i++) {
       if (bufferVars.bufferInfos[i].isInput == ASIOFalse) { // copy output to native arrays
         switch (bufferVars.sampleTypes[i]) {
@@ -127,7 +134,7 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
           case ASIOSTInt32LSB18:
           case ASIOSTInt32LSB20:
           case ASIOSTInt32LSB24:{
-            jarray jArray = (jarray) env->GetObjectArrayElement((bufferVars.bufferInfos[i].isInput == ASIOTrue) ? bufferVars.inputIntArrays : bufferVars.outputIntArrays, bufferVars.bufferInfos[i].channelNum);
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.outputIntArrays, bufferVars.bufferInfos[i].channelNum);
             void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
             memcpy(bufferVars.bufferInfos[i].buffers[bufferIndex], nativeArray, sizeof(int) * bufferVars.bufferSize);
             env->ReleasePrimitiveArrayCritical(jArray, nativeArray, JNI_ABORT); // do NOT copy contents back to java array
@@ -139,7 +146,6 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
         }
       }
     }
-    */
   }
   return NULL; // dunno what to do with this yet...
 }

@@ -95,21 +95,4 @@ public class JAsioHost {
 	    JAsioHost.removeCurrentDriver();
 	  }
 	}
-	
-	public static void main(String[] args) {
-		List<String> driverNameList = JAsioHost.getDriverNames();
-		AsioDriver asioDriver = JAsioHost.getAsioDriver(driverNameList.get(0));
-		asioDriver.openControlPanel();
-		Set<AsioChannelInfo> channelSet = new HashSet<AsioChannelInfo>();
-		channelSet.add(asioDriver.getChannelInfoOutput(0));
-		channelSet.add(asioDriver.getChannelInfoOutput(1));
-		asioDriver.createBuffers(channelSet, asioDriver.getBufferPreferredSize());
-//		asioDriver.start();
-		try {
-			Thread.sleep(1000);
-		} catch (Exception e) {
-			// ???
-		}
-		JAsioHost.shutdownAndUnloadDriver();
-	}
 }
