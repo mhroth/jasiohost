@@ -24,6 +24,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * The ExampleHost is a very simple example of how to load and initialise
+ * an ASIO driver. It loads the first driver referenced by the system. The
+ * control panel is opened for 5 seconds for the user to make any adjustments
+ * to the settings. Then a 440Hz tone (sine) is played on the first two outputs
+ * for 2 seconds.
+ */
 public class ExampleHost implements AsioDriverListener {
 
   private AsioDriver asioDriver;

@@ -87,16 +87,47 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
   JNIEnv *env = NULL;
   jint res = jvm->AttachCurrentThreadAsDaemon((void **) &env, NULL);
   if (res == JNI_OK && env != NULL) {
-    /* TODO: deal with input arrays
-    for (int i = 0; i < numInitedChannels; i++) {
-      if (bufferInfos[i].isInput == ASIOTrue) { // only treat input arrays at input
-        jarray jArray = inputArrays[bufferInfos[i].channelNum];
-        void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
-        memcpy(nativeArray, bufferInfos[i].buffers[bufferIndex], sizeof(int) * bufferSize);
-        env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do copy contents to java array
+    for (int i = 0; i < bufferVars.numInitedChannels; i++) {
+      if (bufferVars.bufferInfos[i].isInput == ASIOTrue) { // copy native arrays to input
+        switch (bufferVars.sampleTypes[i]) {
+          case ASIOSTFloat32MSB:
+          case ASIOSTFloat32LSB: {
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.inputFloatArrays, bufferVars.bufferInfos[i].channelNum);
+            void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            memcpy(nativeArray, bufferVars.bufferInfos[i].buffers[bufferIndex], sizeof(float) * bufferVars.bufferSize);
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do copy contents back to java array
+            break;
+          }
+          case ASIOSTFloat64MSB:
+          case ASIOSTFloat64LSB: {
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.inputDoubleArrays, bufferVars.bufferInfos[i].channelNum);
+            void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            memcpy(nativeArray, bufferVars.bufferInfos[i].buffers[bufferIndex], sizeof(double) * bufferVars.bufferSize);
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do NOT copy contents back to java array
+            break;
+          }
+          case ASIOSTInt32MSB:
+          case ASIOSTInt32MSB16:
+          case ASIOSTInt32MSB18:
+          case ASIOSTInt32MSB20:
+          case ASIOSTInt32MSB24:
+          case ASIOSTInt32LSB:
+          case ASIOSTInt32LSB16:
+          case ASIOSTInt32LSB18:
+          case ASIOSTInt32LSB20:
+          case ASIOSTInt32LSB24:{
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.inputIntArrays, bufferVars.bufferInfos[i].channelNum);
+            void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            memcpy(nativeArray, bufferVars.bufferInfos[i].buffers[bufferIndex], sizeof(int) * bufferVars.bufferSize);
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do NOT copy contents back to java array
+            break;
+          }
+          default: {
+            // ???
+          }
+        }
       }
     }
-    */
 
     env->CallVoidMethod(
         jAsioDriver,
@@ -110,7 +141,7 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
         switch (bufferVars.sampleTypes[i]) {
           case ASIOSTFloat32MSB:
           case ASIOSTFloat32LSB: {
-            jarray jArray = (jarray) env->GetObjectArrayElement((bufferVars.bufferInfos[i].isInput == ASIOTrue) ? bufferVars.inputFloatArrays : bufferVars.outputFloatArrays, bufferVars.bufferInfos[i].channelNum);
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.outputFloatArrays, bufferVars.bufferInfos[i].channelNum);
             void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
             memcpy(bufferVars.bufferInfos[i].buffers[bufferIndex], nativeArray, sizeof(float) * bufferVars.bufferSize);
             env->ReleasePrimitiveArrayCritical(jArray, nativeArray, JNI_ABORT); // do NOT copy contents back to java array
@@ -118,7 +149,7 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
           }
           case ASIOSTFloat64MSB:
           case ASIOSTFloat64LSB: {
-            jarray jArray = (jarray) env->GetObjectArrayElement((bufferVars.bufferInfos[i].isInput == ASIOTrue) ? bufferVars.inputDoubleArrays : bufferVars.outputDoubleArrays, bufferVars.bufferInfos[i].channelNum);
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.outputDoubleArrays, bufferVars.bufferInfos[i].channelNum);
             void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
             memcpy(bufferVars.bufferInfos[i].buffers[bufferIndex], nativeArray, sizeof(double) * bufferVars.bufferSize);
             env->ReleasePrimitiveArrayCritical(jArray, nativeArray, JNI_ABORT); // do NOT copy contents back to java array
@@ -486,6 +517,8 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIODisposeBuffers
 (JNIEnv *env, jclass clazz) {
 
   // need to free bufferVars? YES!!!
+  free(bufferVars.bufferInfos);
+  free(bufferVars.sampleTypes);
   env->DeleteGlobalRef(bufferVars.inputIntArrays);
   env->DeleteGlobalRef(bufferVars.outputIntArrays);
   env->DeleteGlobalRef(bufferVars.inputFloatArrays);

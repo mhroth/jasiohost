@@ -36,6 +36,7 @@ public class AsioDriver {
     final AsioDriver asioDriver = this;
     resetRunnable = new Runnable() {
       public void run() {
+    	System.out.println("resetting driver...");
         asioDriver.reset();
       }
     };
