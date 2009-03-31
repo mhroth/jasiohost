@@ -401,7 +401,6 @@ public class AsioDriver {
   
   @SuppressWarnings("unused")
   private void fireSampleRateDidChange(double sampleRate) {
-    System.out.println("sampleRateDidChange @ " + Long.toString(System.currentTimeMillis()));
     for (AsioDriverListener listener : listeners) {
       listener.sampleRateDidChange(sampleRate);
     }
@@ -409,7 +408,6 @@ public class AsioDriver {
   
   @SuppressWarnings("unused")
   private synchronized void fireResetRequest() {
-    System.out.println("resetRequest @ " + Long.toString(System.currentTimeMillis()));
     /*
      * Start the reset thread, which will block because the current thread 
      * owns the lock on the AsioDriver object. It will reset the driver once this
@@ -428,7 +426,6 @@ public class AsioDriver {
   
   @SuppressWarnings("unused")
   private void fireResyncRequest() {
-    System.out.println("resyncRequest @ " + Long.toString(System.currentTimeMillis()));
     for (AsioDriverListener listener : listeners) {
       listener.resyncRequest();
     }
@@ -436,7 +433,6 @@ public class AsioDriver {
   
   @SuppressWarnings("unused")
   private void fireLatenciesChanged(int inputLatency, int outputLatency) {
-    System.out.println("latenciesChanged @ " + Long.toString(System.currentTimeMillis()));
     for (AsioDriverListener listener : listeners) {
       listener.latenciesChanged(inputLatency, outputLatency);
     }
@@ -446,7 +442,6 @@ public class AsioDriver {
   private void fireBufferSwitch(int[][] inputInt, int[][] outputInt,
 		                        float[][] inputFloat, float[][] outputFloat,
 		                        double[][] inputDouble, double[][] outputDouble) {
-    System.out.println("bufferSwitch @ " + Long.toString(System.currentTimeMillis()));
     for (AsioDriverListener listener : listeners) {
       listener.bufferSwitch(inputInt, outputInt,
     		                inputFloat, outputFloat,
