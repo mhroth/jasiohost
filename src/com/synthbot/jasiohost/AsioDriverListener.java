@@ -27,8 +27,21 @@ public interface AsioDriverListener {
   /**
    * The driver requests a reset in the case of an unexpected failure or a device
    * reconfiguration. As this request is being made in a callback, the driver should
-   * only be reset after this callback method has returned. Note that all 
-   * <code>AsioDriver</code> methods are synchronized.
+   * only be reset after this callback method has returned. The recommended way to reset
+   * the driver is:
+   * <pre><code>
+   * public void resetRequest() {
+   *   new Thread() {
+   *     @Override
+   *     public void run() {
+   * 	   JAsioHost.getCurrentDriver().returnToState(AsioDriverState.INITIALIZED);
+   *     }
+   *   }.start();
+   * }
+   * </code></pre>
+   * Because all methods are synchronized, this approach will safely return the driver
+   * to the INITIALIZED state as soon as possible. The buffers must then be recreated
+   * and the driver restarted.
    */
   public void resetRequest();
   

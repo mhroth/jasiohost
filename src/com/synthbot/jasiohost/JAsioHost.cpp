@@ -134,6 +134,25 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
             env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do copy contents back to java array
             break;
           }
+          case ASIOSTInt24MSB:
+          case ASIOSTInt24LSB: {
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.inputIntArrays, bufferVars.bufferInfos[i].channelNum);
+            char *nativeArray = (char *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            // need to convert from three data bytes to four
+            int numBytes = sizeof(int) * bufferVars.bufferSize;
+            int triCounter = 0;
+            int zeroCounter = 0;
+            for (int i = 0; i < numBytes; i++, zeroCounter++) {
+              if (zeroCounter == 3) {
+                nativeArray[i] = 0;
+                zeroCounter = 0;
+              } else {
+                nativeArray[i] = ((char *) bufferVars.bufferInfos[i].buffers[bufferIndex])[triCounter++];          
+              }
+            }
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do copy contents back to java array
+            break;
+          }
           case ASIOSTInt16MSB:
           case ASIOSTInt16LSB: {
             jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.inputShortArrays, bufferVars.bufferInfos[i].channelNum);
@@ -175,6 +194,25 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
             jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.outputFloatArrays, bufferVars.bufferInfos[i].channelNum);
             void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
             memcpy(bufferVars.bufferInfos[i].buffers[bufferIndex], nativeArray, sizeof(float) * bufferVars.bufferSize);
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, JNI_ABORT); // do NOT copy contents back to java array
+            break;
+          }
+          case ASIOSTInt24MSB:
+          case ASIOSTInt24LSB: {
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.outputFloatArrays, bufferVars.bufferInfos[i].channelNum);
+            char *nativeArray = (char *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            // need to convert from four data bytes to three
+            int numBytes = sizeof(int) * bufferVars.bufferSize;
+            int triCounter = 0;
+            int zeroCounter = 0;
+            for (int i = 0; i < numBytes; i++, zeroCounter++) {
+              if (zeroCounter == 3) {
+                i++; // skip the zero
+                zeroCounter = 0;
+              } else {
+                ((char *) bufferVars.bufferInfos[i].buffers[bufferIndex])[triCounter++] = nativeArray[i];
+              }
+            }
             env->ReleasePrimitiveArrayCritical(jArray, nativeArray, JNI_ABORT); // do NOT copy contents back to java array
             break;
           }
@@ -356,6 +394,9 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOInit
         env->NewStringUTF(asioDriverInfo.name),
         env->NewStringUTF(asioDriverInfo.errorMessage));
   } else {
+    env->ThrowNew(
+      env->FindClass("com/synthbot/jasiohost/AsioInitException"),
+      asioDriverInfo.errorMessage);
     return NULL;
   }
 }

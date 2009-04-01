@@ -24,6 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Note that all methods can throw an <code>IllegalStateException</code> if the driver is not
+ * in the appropriate state for that method to be called. For instance, if <code>start()</code>
+ * is called before <code>createBuffers</code>, an <code>IllegalStateException</code> will be
+ * thrown.
+ */
 public class AsioDriver {
   
   protected AsioDriverState state;
@@ -48,7 +54,7 @@ public class AsioDriver {
   protected void finalize() throws Throwable {
     try {
       returnToState(AsioDriverState.LOADED);
-      JAsioHost.shutdownAndUnloadDriver(); // to get out of LOADED state?
+      JAsioHost.shutdownAndUnloadDriver();
     } finally {
       super.finalize();
     }
@@ -66,22 +72,23 @@ public class AsioDriver {
    * @return  An AsioDriverInfo object is returned with name and version information
    * about the initialised driver.
    */
-  public synchronized AsioDriverInfo init() {
+  public synchronized AsioDriverInfo init() throws AsioInitException {
     if (!AsioDriverState.LOADED.equals(state)) {
       throw new IllegalStateException("AsioDriver must be in AsioDriverState.LOADED state in order " +
-      		"to be initialised. The current state is: " + state.toString());
+          "to be initialised. The current state is: " + state.toString());
     }
     state = AsioDriverState.INITIALIZED;
     return ASIOInit();
   }
-  private native AsioDriverInfo ASIOInit();
+  private native AsioDriverInfo ASIOInit() throws AsioInitException ;
   
   /**
    * ASIOExit
    */
   public synchronized void exit() {
     if (!AsioDriverState.INITIALIZED.equals(state)) {
-      throw new IllegalStateException();
+    	throw new IllegalStateException("AsioDriver must be in AsioDriverState.INITIALIZED state " +
+            "in order to be initialised. The current state is: " + state.toString());
     }
     ASIOExit();
     state = AsioDriverState.LOADED;
@@ -179,8 +186,8 @@ public class AsioDriver {
   private static native int ASIOGetBufferSize(int index);
   
   /**
-   * Note: As ASIOGetLatencies() will also have to include the audio buffer size of the 
-   * ASIOCreateBuffers() call, the application should call this function after the buffer creation. 
+   * Note: As <code>getLatencyInput()</code> will also have to include the audio buffer size of the 
+   * <code>createBuffers()</code> call, the application should call this function after the buffer creation. 
    * In the case that the call occurs beforehand the driver should assume preferred buffer size. 
    * @return  The input latency in samples.
    */
@@ -192,7 +199,9 @@ public class AsioDriver {
   }
   
   /**
-   * 
+   * Note: As <code>getLatencyOutput()</code> will also have to include the audio buffer size of the 
+   * <code>createBuffers()</code> call, the application should call this function after the buffer creation. 
+   * In the case that the call occurs beforehand the driver should assume preferred buffer size.
    * @return  The output latency in samples.
    */
   public synchronized int getLatencyOutput() {
@@ -236,12 +245,11 @@ public class AsioDriver {
       throw new IndexOutOfBoundsException();
     }
     AsioChannelInfo channelInfo = ASIOGetChannelInfo(index, false);
-    switch (channelInfo.getSampleType()) {
-      case ASIOSTInt24MSB:
-      case ASIOSTInt24LSB: {
-        System.err.println("WARNING: JAsioHost does not support this sample type at the moment. " +
-        		"Undefined behaviour will result if the driver is start()ed.");
-      }
+    if (channelInfo.getSampleType().toString().endsWith("MSB")) {
+      System.err.println("WARNING: JAsioHost does not support the sample type of this channel " +
+          "at the moment (" + channelInfo.getSampleType().toString() + "). Undefined behaviour " +
+          "will result if the driver is start()ed. Nothing too bad though. Probably just noise at " +
+          "the output or silence.");
     }
     return channelInfo;
   }
@@ -358,13 +366,15 @@ public class AsioDriver {
   private static native void ASIOStop();
   
   /**
-   * Shut down the driver, regardless of what state it is in. Return it to the LOADED state.
+   * Return the driver to a given state. If the target state is ahead of the current state, or if
+   * the target state is equal to the current state, then this method has no effect.
+   * @param targetState  The state to which the driver should return.
    */
-  protected synchronized void returnToState(AsioDriverState targetState) {
+  public synchronized void returnToState(AsioDriverState targetState) {
     if (targetState == null) {
       throw new NullPointerException();
     }
-    if (state.atLeastInState(targetState)) {
+    if (targetState.ordinal() < state.ordinal()) {
       switch (state) {
     	case RUNNING: {
     		stop();

@@ -40,7 +40,13 @@ public class ExampleHost implements AsioDriverListener {
 
   public ExampleHost() {
     List<String> driverNameList = JAsioHost.getDriverNames();
-    asioDriver = JAsioHost.getAsioDriver(driverNameList.get(0));
+    asioDriver = null;
+    try {
+      asioDriver = JAsioHost.getAsioDriver(driverNameList.get(0));    	
+    } catch (AsioInitException aie) {
+      aie.printStackTrace(System.err);
+      System.exit(0);
+    }
     activeChannels = new HashSet<AsioChannelInfo>();
     activeChannels.add(asioDriver.getChannelInfoOutput(0));
     activeChannels.add(asioDriver.getChannelInfoOutput(1));
@@ -82,7 +88,7 @@ public class ExampleHost implements AsioDriverListener {
             break;
           }
           case INTEGER: {
-            outputInt[channelInfo.getChannelIndex()][i] = (int) (sampleValue * (double) Integer.MAX_VALUE);
+            outputInt[channelInfo.getChannelIndex()][i] = (int) (sampleValue * (double) Integer.MAX_VALUE) >> 2;
             break;
           }
           default: {
@@ -131,7 +137,7 @@ public class ExampleHost implements AsioDriverListener {
     }
     host.start();
     try {
-      Thread.sleep(5000);
+      Thread.sleep(4000);
     } catch (Exception e) {
       // ???
     }
