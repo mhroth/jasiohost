@@ -24,73 +24,87 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JAsioHost {
-	
-	private static AsioDriver asioDriver;
-	
-	private JAsioHost() {
-		// no instance of this class allowed
-	}
-	
-	static {
-		System.loadLibrary("jasiohost");
-	}
-	
-	/**
-	 * The designated ASIO driver is loaded and returned in the INITIALIZED state. If a driver is
-	 * already loaded and it is the named driver, then that driver object is returned. If the named
-	 * driver is different from the one currently loaded, then the currently loaded driver is shut down
-	 * and a new one is instantiated.
-	 * @param driverName  The name of the driver to load, as returned by <code>getDriverNames</code>.
-	 * @return  The named AsioDriver object.
-	 */
-	public static AsioDriver getAsioDriver(String driverName) {
-		if (driverName == null) {
-			throw new NullPointerException();
-		}
-		if (JAsioHost.getCurrentDriverName().equals(driverName)) {
-		  return asioDriver;
-		} else {
-		  if (!getDriverNames().contains(driverName)) {
-		    throw new IllegalArgumentException("The given driver name does not exist in the system registry. " +
-		    "Check getDriverNames().");
-		  }
-		  
-		  JAsioHost.shutdownAndUnloadDriver();
-		  loadDriver(driverName);
-		  asioDriver = new AsioDriver();
-		  asioDriver.init();
-		  return asioDriver;
-		}		
-	}
-	
-	private static native boolean loadDriver(String driverName);
-	
-	private static native void removeCurrentDriver();
-	
-	public static List<String> getDriverNames() {
-		String[] driverNames = new String[32];
-		int numNames = getDriverNames(driverNames);
-		List<String> nameList = new ArrayList<String>(numNames);
-		for (String name : driverNames) {
-			nameList.add(name);
-		}
-		return nameList;
-	}
-	private static native int getDriverNames(String[] driverNames);
-	
-	public static native String getCurrentDriverName();
-	
-	public static native int getCurrentDriverIndex();
-	
-	/**
-	 * Shutdown the currently loaded ASIO driver, regardless of what state it is in. Unload it from
-	 * memory. If no driver is loaded, then this method has no effect.
-	 */
-	public static void shutdownAndUnloadDriver() {
-	  if (asioDriver != null) {
-	    asioDriver.shutdown();
-	    asioDriver = null;
-	    JAsioHost.removeCurrentDriver();
-	  }
-	}
+
+  private static AsioDriver asioDriver;
+
+  private JAsioHost() {
+    // no instance of this class allowed
+  }
+
+  static {
+    System.loadLibrary("jasiohost");
+  }
+
+  /**
+   * The designated ASIO driver is loaded and returned in the INITIALIZED state. If a driver is
+   * already loaded and it is the named driver, then that driver object is returned. If the named
+   * driver is different from the one currently loaded, then the currently loaded driver is shut
+   * down and a new one is instantiated.
+   * 
+   * @param driverName  The name of the driver to load, as returned by <code>getDriverNames</code>.
+   * @return The named AsioDriver object.
+   */
+  public static AsioDriver getAsioDriver(String driverName) {
+    if (driverName == null) {
+      throw new NullPointerException();
+    }
+    if (JAsioHost.getCurrentDriverName().equals(driverName)) {
+      return asioDriver;
+    } else {
+      if (!getDriverNames().contains(driverName)) {
+        throw new IllegalArgumentException(
+            "The given driver name does not exist in the system registry. "
+                + "Check getDriverNames().");
+      }
+
+      JAsioHost.shutdownAndUnloadDriver();
+      loadDriver(driverName);
+      asioDriver = new AsioDriver();
+      asioDriver.init();
+      return asioDriver;
+    }
+  }
+  
+  /**
+   * Returns the currently loaded <code>AsioDriver</code>.
+   * @return  The current <code>AsioDriver</code> object. May be <code>null</code> 
+   * if no driver is loaded.
+   */
+  public static AsioDriver getCurrentDriver() {
+    return asioDriver;
+  }
+
+  private static native boolean loadDriver(String driverName);
+
+  private static native void removeCurrentDriver();
+
+  /**
+   * A list of all (maximum 32) ASIO drivers registered with the system is returned.
+   */
+  public static List<String> getDriverNames() {
+    String[] driverNames = new String[32];
+    int numNames = getDriverNames(driverNames);
+    List<String> nameList = new ArrayList<String>(numNames);
+    for (String name : driverNames) {
+      nameList.add(name);
+    }
+    return nameList;
+  }
+  private static native int getDriverNames(String[] driverNames);
+
+  public static native String getCurrentDriverName();
+
+  public static native int getCurrentDriverIndex();
+
+  /**
+   * Shutdown the currently loaded ASIO driver, regardless of what state it is in. Unload it from
+   * memory. If no driver is loaded, then this method has no effect.
+   */
+  public static void shutdownAndUnloadDriver() {
+    if (asioDriver != null) {
+      asioDriver.returnToState(AsioDriverState.LOADED);
+      asioDriver = null;
+      JAsioHost.removeCurrentDriver();
+    }
+  }
 }

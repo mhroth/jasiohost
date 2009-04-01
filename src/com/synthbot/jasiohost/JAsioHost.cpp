@@ -42,6 +42,10 @@ typedef struct BufferVars {
   ASIOSampleType *sampleTypes;
   int numInitedChannels; // length of bufferInfos and sampleTypes arrays
   int bufferSize;
+  jobjectArray inputByteArrays;
+  jobjectArray outputByteArrays;
+  jobjectArray inputShortArrays;
+  jobjectArray outputShortArrays;
   jobjectArray inputIntArrays;
   jobjectArray outputIntArrays;
   jobjectArray inputFloatArrays;
@@ -51,7 +55,7 @@ typedef struct BufferVars {
 } BufferVars;
 BufferVars bufferVars = {0};
 
-int reverseBytes(int i) {
+int reverseBytesInt(int i) {
   int j = i & 0x000000FF;
   j <<= 8; i >>= 8;
   j |= i & 0x000000FF;
@@ -68,7 +72,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *localJvm, void *reserved) {
   
   JNIEnv *env = NULL;
   jvm->GetEnv((void **) &env, JNI_VERSION);
-  fireBufferSwitchMid = env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireBufferSwitch", "([[I[[I[[F[[F[[D[[D)V");
+  fireBufferSwitchMid = env->GetMethodID(
+      env->FindClass("com/synthbot/jasiohost/AsioDriver"), 
+      "fireBufferSwitch", "([[B[[B[[S[[S[[I[[I[[F[[F[[D[[D)V");
   return JNI_VERSION;
 }
 
@@ -110,20 +116,43 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
           case ASIOSTInt32MSB16:
           case ASIOSTInt32MSB18:
           case ASIOSTInt32MSB20:
-          case ASIOSTInt32MSB24:
+          case ASIOSTInt32MSB24: {
+            // reverse the endianness of given ints, as we are on an x86 machine
+            for (int i = 0; i < bufferVars.bufferSize; i++) {
+              ((int *) bufferVars.bufferInfos[i].buffers[bufferIndex])[i] = reverseBytesInt(((int *) bufferVars.bufferInfos[i].buffers[bufferIndex])[i]);
+            }
+            // allow fall-through
+          }
           case ASIOSTInt32LSB:
           case ASIOSTInt32LSB16:
           case ASIOSTInt32LSB18:
           case ASIOSTInt32LSB20:
-          case ASIOSTInt32LSB24:{
+          case ASIOSTInt32LSB24: {
             jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.inputIntArrays, bufferVars.bufferInfos[i].channelNum);
             void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
             memcpy(nativeArray, bufferVars.bufferInfos[i].buffers[bufferIndex], sizeof(int) * bufferVars.bufferSize);
-            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do NOT copy contents back to java array
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do copy contents back to java array
+            break;
+          }
+          case ASIOSTInt16MSB:
+          case ASIOSTInt16LSB: {
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.inputShortArrays, bufferVars.bufferInfos[i].channelNum);
+            void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            memcpy(nativeArray, bufferVars.bufferInfos[i].buffers[bufferIndex], sizeof(short) * bufferVars.bufferSize);
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do copy contents back to java array
+            break;
+          }
+          case ASIOSTDSDInt8MSB1:
+          case ASIOSTDSDInt8LSB1:
+          case ASIOSTDSDInt8NER8: {
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.inputByteArrays, bufferVars.bufferInfos[i].channelNum);
+            void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            memcpy(nativeArray, bufferVars.bufferInfos[i].buffers[bufferIndex], sizeof(char) * bufferVars.bufferSize);
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, 0); // do copy contents back to java array
             break;
           }
           default: {
-            // ???
+            // do nothing (silence)
           }
         }
       }
@@ -132,6 +161,8 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
     env->CallVoidMethod(
         jAsioDriver,
         fireBufferSwitchMid,
+        bufferVars.inputByteArrays, bufferVars.outputByteArrays,
+        bufferVars.inputShortArrays, bufferVars.outputShortArrays,
         bufferVars.inputIntArrays, bufferVars.outputIntArrays,
         bufferVars.inputFloatArrays, bufferVars.outputFloatArrays,
         bufferVars.inputDoubleArrays, bufferVars.outputDoubleArrays);
@@ -171,8 +202,25 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
             env->ReleasePrimitiveArrayCritical(jArray, nativeArray, JNI_ABORT); // do NOT copy contents back to java array
             break;
           }
+          case ASIOSTInt16MSB:
+          case ASIOSTInt16LSB: {
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.outputShortArrays, bufferVars.bufferInfos[i].channelNum);
+            void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            memcpy(bufferVars.bufferInfos[i].buffers[bufferIndex], nativeArray, sizeof(short) * bufferVars.bufferSize);
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, JNI_ABORT); // do NOT copy contents back to java array
+            break;
+          }
+          case ASIOSTDSDInt8MSB1:
+          case ASIOSTDSDInt8LSB1:
+          case ASIOSTDSDInt8NER8: {
+            jarray jArray = (jarray) env->GetObjectArrayElement(bufferVars.outputByteArrays, bufferVars.bufferInfos[i].channelNum);
+            void *nativeArray = (void *) env->GetPrimitiveArrayCritical(jArray, NULL);
+            memcpy(bufferVars.bufferInfos[i].buffers[bufferIndex], nativeArray, sizeof(char) * bufferVars.bufferSize);
+            env->ReleasePrimitiveArrayCritical(jArray, nativeArray, JNI_ABORT); // do NOT copy contents back to java array
+            break;
+          }
           default: {
-            // ???
+            // do nothing (silence)
           }
         }
       }
@@ -251,7 +299,7 @@ long asioMessage(long selector, long value, void* message, double* opt) {
       
     case kAsioLatenciesChanged: {
       JNIEnv *env = NULL;
-      jint res = jvm->AttachCurrentThread((void **) &env, NULL);
+      jint res = jvm->AttachCurrentThreadAsDaemon((void **) &env, NULL);
       if (res == JNI_OK && env != NULL) {
         env->CallVoidMethod(
             jAsioDriver,
@@ -476,7 +524,9 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetChannelI
 }
 
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
-(JNIEnv *env, jclass clazz, jobjectArray channelsToInit, jint bufferSize, 
+(JNIEnv *env, jclass clazz, jobjectArray channelsToInit, jint bufferSize,
+ jobjectArray inputByteArrays, jobjectArray outputByteArrays,
+ jobjectArray inputShortArrays, jobjectArray outputShortArrays,
  jobjectArray inputIntArrays, jobjectArray outputIntArrays, 
  jobjectArray inputFloatArrays, jobjectArray outputFloatArrays, 
  jobjectArray inputDoubleArrays, jobjectArray outputDoubleArrays) {
@@ -492,9 +542,17 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
     jint channelNum = env->CallIntMethod(channelInfo,
                                          env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), "getChannelIndex", "()I"));
     bufferVars.bufferInfos[i].channelNum = (long) channelNum;
-    bufferVars.sampleTypes[i] = ASIOSTInt32LSB;
+    bufferVars.sampleTypes[i] = env->GetIntField(
+                                    env->CallObjectMethod(
+                                        channelInfo,
+                                        env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), "getSampleType", "()Lcom/synthbot/jasiohost/AsioSampleType;")),
+                                    env->GetFieldID(env->FindClass("com/synthbot/jasiohost/AsioSampleType"), "nativeEnum", "I"));    
   }
-
+  
+  bufferVars.inputByteArrays = (jobjectArray) env->NewGlobalRef(inputByteArrays);
+  bufferVars.outputByteArrays = (jobjectArray) env->NewGlobalRef(outputByteArrays);
+  bufferVars.inputShortArrays = (jobjectArray) env->NewGlobalRef(inputShortArrays);
+  bufferVars.outputShortArrays = (jobjectArray) env->NewGlobalRef(outputShortArrays);
   bufferVars.inputIntArrays = (jobjectArray) env->NewGlobalRef(inputIntArrays);
   bufferVars.outputIntArrays = (jobjectArray) env->NewGlobalRef(outputIntArrays);
   bufferVars.inputFloatArrays = (jobjectArray) env->NewGlobalRef(inputFloatArrays);
@@ -516,9 +574,12 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIODisposeBuffers
 (JNIEnv *env, jclass clazz) {
 
-  // need to free bufferVars? YES!!!
   free(bufferVars.bufferInfos);
   free(bufferVars.sampleTypes);
+  env->DeleteGlobalRef(bufferVars.inputByteArrays);
+  env->DeleteGlobalRef(bufferVars.outputByteArrays);
+  env->DeleteGlobalRef(bufferVars.inputShortArrays);
+  env->DeleteGlobalRef(bufferVars.outputShortArrays);
   env->DeleteGlobalRef(bufferVars.inputIntArrays);
   env->DeleteGlobalRef(bufferVars.outputIntArrays);
   env->DeleteGlobalRef(bufferVars.inputFloatArrays);

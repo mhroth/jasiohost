@@ -28,18 +28,9 @@ public class AsioDriver {
   
   protected AsioDriverState state;
   private List<AsioDriverListener> listeners;
-  private final Runnable resetRunnable;
-  
   
   protected AsioDriver() {
     state = AsioDriverState.LOADED;
-    final AsioDriver asioDriver = this;
-    resetRunnable = new Runnable() {
-      public void run() {
-    	System.out.println("resetting driver...");
-        asioDriver.reset();
-      }
-    };
     listeners = new ArrayList<AsioDriverListener>();
   }
   
@@ -56,7 +47,7 @@ public class AsioDriver {
   @Override
   protected void finalize() throws Throwable {
     try {
-      shutdown();
+      returnToState(AsioDriverState.LOADED);
       JAsioHost.shutdownAndUnloadDriver(); // to get out of LOADED state?
     } finally {
       super.finalize();
@@ -66,7 +57,7 @@ public class AsioDriver {
   /**
    * Returns the current state of the ASIO driver.
    */
-  public AsioDriverState getState() {
+  public synchronized AsioDriverState getState() {
     return state;
   }
   
@@ -75,7 +66,7 @@ public class AsioDriver {
    * @return  An AsioDriverInfo object is returned with name and version information
    * about the initialised driver.
    */
-  public AsioDriverInfo init() {
+  public synchronized AsioDriverInfo init() {
     if (!AsioDriverState.LOADED.equals(state)) {
       throw new IllegalStateException("AsioDriver must be in AsioDriverState.LOADED state in order " +
       		"to be initialised. The current state is: " + state.toString());
@@ -88,7 +79,7 @@ public class AsioDriver {
   /**
    * ASIOExit
    */
-  public void exit() {
+  public synchronized void exit() {
     if (!AsioDriverState.INITIALIZED.equals(state)) {
       throw new IllegalStateException();
     }
@@ -101,7 +92,7 @@ public class AsioDriver {
    * Open the native control panel, allowing the user to adjust the ASIO settings. A control panel
    * may not be provided by all drivers on all platforms.
    */
-  public void openControlPanel() {
+  public synchronized void openControlPanel() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -113,7 +104,7 @@ public class AsioDriver {
    * Returns the number of available input channels. -1 is returned if there is an error.
    * @return  The number of available input channels.
    */
-  public int getNumChannelsInput() {
+  public synchronized int getNumChannelsInput() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -124,7 +115,7 @@ public class AsioDriver {
    * Returns the number of available output channels. -1 is return if there is an error.
    * @return  The number of available output channels.
    */
-  public int getNumChannelsOutput() {
+  public synchronized int getNumChannelsOutput() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -136,7 +127,7 @@ public class AsioDriver {
    * Returns the current sample rate to which the host is set.
    * @return  The current sample rate.
    */
-  public double getSampleRate() {
+  public synchronized double getSampleRate() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -149,7 +140,7 @@ public class AsioDriver {
    * @param sampleRate  The sample rate in question.
    * @return  True if the sample rate is supported. False otherwise.
    */
-  public boolean canSampleRate(double sampleRate) {
+  public synchronized boolean canSampleRate(double sampleRate) {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -157,28 +148,28 @@ public class AsioDriver {
   }
   private static native boolean ASIOCanSampleRate(double sampleRate);
   
-  public int getBufferMinSize() {
+  public synchronized int getBufferMinSize() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
     return ASIOGetBufferSize(0);
   }
   
-  public int getBufferMaxSize() {
+  public synchronized int getBufferMaxSize() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
     return ASIOGetBufferSize(1);
   }
   
-  public int getBufferPreferredSize() {
+  public synchronized int getBufferPreferredSize() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
     return ASIOGetBufferSize(2);
   }
   
-  public int getBufferGranularity() {
+  public synchronized int getBufferGranularity() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -193,7 +184,7 @@ public class AsioDriver {
    * In the case that the call occurs beforehand the driver should assume preferred buffer size. 
    * @return  The input latency in samples.
    */
-  public int getLatencyInput() {
+  public synchronized int getLatencyInput() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -204,7 +195,7 @@ public class AsioDriver {
    * 
    * @return  The output latency in samples.
    */
-  public int getLatencyOutput() {
+  public synchronized int getLatencyOutput() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -220,7 +211,7 @@ public class AsioDriver {
    * @throws IndexOutOfBoundsException  Thrown if the requested channel index is out of bounds. The
    * channel does not exist.
    */
-  public AsioChannelInfo getChannelInfoInput(int index) {
+  public synchronized AsioChannelInfo getChannelInfoInput(int index) {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -237,7 +228,7 @@ public class AsioDriver {
    * @throws IndexOutOfBoundsException  Thrown if the requested channel index is out of bounds. The
    * channel does not exist.
    */
-  public AsioChannelInfo getChannelInfoOutput(int index) {
+  public synchronized AsioChannelInfo getChannelInfoOutput(int index) {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
@@ -246,13 +237,8 @@ public class AsioDriver {
     }
     AsioChannelInfo channelInfo = ASIOGetChannelInfo(index, false);
     switch (channelInfo.getSampleType()) {
-      case ASIOSTInt16MSB:
       case ASIOSTInt24MSB:
-      case ASIOSTInt16LSB:
-      case ASIOSTInt24LSB:
-      case ASIOSTDSDInt8LSB1:
-      case ASIOSTDSDInt8MSB1:
-      case ASIOSTDSDInt8NER8: {
+      case ASIOSTInt24LSB: {
         System.err.println("WARNING: JAsioHost does not support this sample type at the moment. " +
         		"Undefined behaviour will result if the driver is start()ed.");
       }
@@ -261,7 +247,7 @@ public class AsioDriver {
   }
   private static native AsioChannelInfo ASIOGetChannelInfo(int index, boolean isInput);
   
-  public void createBuffers(Set<AsioChannelInfo> channelsToInit, int bufferSize) {
+  public synchronized void createBuffers(Set<AsioChannelInfo> channelsToInit, int bufferSize) {
     if (!AsioDriverState.INITIALIZED.equals(state)) {
       throw new IllegalStateException();
     }
@@ -271,6 +257,9 @@ public class AsioDriver {
 	  if (channelsToInit.contains(null)) {
 	    throw new IllegalArgumentException();
 	  }
+	  if (channelsToInit.size() == 0) {
+        throw new IllegalArgumentException();
+	  }
 //  if ((bufferSize - getBufferMinSize()) % this.getBufferGranularity() != 0) {
 //    throw new IllegalArgumentException();
 //  }
@@ -279,45 +268,45 @@ public class AsioDriver {
       throw new IllegalArgumentException();
     }
     */
+	  byte[][] inputByteArrays = new byte[getNumChannelsInput()][];
+	  byte[][] outputByteArrays = new byte[getNumChannelsOutput()][];
+	  short[][] inputShortArrays = new short[getNumChannelsInput()][];
+	  short[][] outputShortArrays = new short[getNumChannelsOutput()][];
 	  int[][] inputIntArrays = new int[getNumChannelsInput()][];
 	  int[][] outputIntArrays = new int[getNumChannelsOutput()][];
 	  float[][] inputFloatArrays = new float[getNumChannelsInput()][];
 	  float[][] outputFloatArrays = new float[getNumChannelsOutput()][];
-    double[][] inputDoubleArrays = new double[getNumChannelsInput()][];
-    double[][] outputDoubleArrays = new double[getNumChannelsOutput()][];
+      double[][] inputDoubleArrays = new double[getNumChannelsInput()][];
+      double[][] outputDoubleArrays = new double[getNumChannelsOutput()][];
     for (AsioChannelInfo channelInfo : channelsToInit) {
-      switch (channelInfo.getSampleType()) {
-        case ASIOSTFloat32MSB:
-        case ASIOSTFloat32LSB: {
+      switch (channelInfo.getSampleType().getJavaNativeType()) {
+        case SHORT: {
+          (channelInfo.isInput() ? inputShortArrays : outputShortArrays)[channelInfo.getChannelIndex()] =  new short[bufferSize];
+          break;
+        }
+        case FLOAT: {
           (channelInfo.isInput() ? inputFloatArrays : outputFloatArrays)[channelInfo.getChannelIndex()] =  new float[bufferSize];
           break;
         }
-        case ASIOSTFloat64MSB:
-        case ASIOSTFloat64LSB: {
+        case DOUBLE: {
           (channelInfo.isInput() ? inputDoubleArrays : outputDoubleArrays)[channelInfo.getChannelIndex()] =  new double[bufferSize];
           break;
         }
-        case ASIOSTInt32MSB:
-        case ASIOSTInt32MSB16:
-        case ASIOSTInt32MSB18:
-        case ASIOSTInt32MSB20:
-        case ASIOSTInt32MSB24:
-        case ASIOSTInt32LSB:
-        case ASIOSTInt32LSB16:
-        case ASIOSTInt32LSB18:
-        case ASIOSTInt32LSB20:
-        case ASIOSTInt32LSB24:{
+        case INTEGER: {
           (channelInfo.isInput() ? inputIntArrays : outputIntArrays)[channelInfo.getChannelIndex()] =  new int[bufferSize];
           break;
         }
-        default: {
-          System.err.println("WARNING: Sample type " + channelInfo.getSampleType().toString() + " is not supported.");
+        case BYTE: {
+          (channelInfo.isInput() ? inputByteArrays : outputByteArrays)[channelInfo.getChannelIndex()] =  new byte[bufferSize];
+          break;
         }
       }
     }
     
 	  ASIOCreateBuffers(
 	      channelsToInit.toArray(new AsioChannelInfo[0]), bufferSize,
+	      inputByteArrays, outputByteArrays,
+	      inputShortArrays, outputShortArrays,
 	      inputIntArrays, outputIntArrays,
 	      inputFloatArrays, outputFloatArrays,
 	      inputDoubleArrays, outputDoubleArrays);
@@ -326,6 +315,8 @@ public class AsioDriver {
   }
   private static native void ASIOCreateBuffers(
       AsioChannelInfo[] channelsToInit, int bufferSize,
+      byte[][] inputByte, byte[][] outputByte,
+      short[][] inputShort, short[][] outputShort,
       int[][] inputInt, int[][] outputInt,
       float[][] inputFloat, float[][] outputFloat,
       double[][] inputDouble, double[][] outputDouble);
@@ -333,7 +324,7 @@ public class AsioDriver {
   /**
    * 
    */
-  public void disposeBuffers() {
+  public synchronized void disposeBuffers() {
     if (!AsioDriverState.PREPARED.equals(state)) {
       throw new IllegalStateException();
     }
@@ -345,7 +336,7 @@ public class AsioDriver {
   /**
    * 
    */
-  public void start() {
+  public synchronized void start() {
     if (!AsioDriverState.PREPARED.equals(state)) {
       throw new IllegalStateException();
     }
@@ -357,7 +348,7 @@ public class AsioDriver {
   /**
    * 
    */
-  public void stop() {
+  public synchronized void stop() {
     if (!AsioDriverState.RUNNING.equals(state)) {
       throw new IllegalStateException();
     }
@@ -369,17 +360,28 @@ public class AsioDriver {
   /**
    * Shut down the driver, regardless of what state it is in. Return it to the LOADED state.
    */
-  protected void shutdown() {
-    switch (state) {
-      case RUNNING: {
-        stop();
-        // allow fall-throughs
-      }
-      case PREPARED: {
-        disposeBuffers();
-      }
-      case INITIALIZED: {
-        exit();
+  protected synchronized void returnToState(AsioDriverState targetState) {
+    if (targetState == null) {
+      throw new NullPointerException();
+    }
+    if (state.atLeastInState(targetState)) {
+      switch (state) {
+    	case RUNNING: {
+    		stop();
+    		if (state.equals(targetState)) {
+              break;
+    		}
+    		// allow fall-throughs
+    	}
+    	case PREPARED: {
+    		disposeBuffers();
+    		if (state.equals(targetState)) {
+              break;
+      		}
+    	}
+    	case INITIALIZED: {
+    		exit();
+        }
       }
     }
   }
@@ -389,19 +391,18 @@ public class AsioDriver {
    * Callbacks
    */
   
-  // TODO: note the synchronization issues in using the list
-  public void addAsioDriverListener(AsioDriverListener listener) {
+  public synchronized void addAsioDriverListener(AsioDriverListener listener) {
     if (!listeners.contains(listener)) {
       listeners.add(listener);
     }
   }
   
-  public void removeAsioDriverListener(AsioDriverListener listener) {
+  public synchronized void removeAsioDriverListener(AsioDriverListener listener) {
     listeners.remove(listener);
   }
   
   @SuppressWarnings("unused")
-  private void fireSampleRateDidChange(double sampleRate) {
+  private synchronized void fireSampleRateDidChange(double sampleRate) {
     for (AsioDriverListener listener : listeners) {
       listener.sampleRateDidChange(sampleRate);
     }
@@ -409,42 +410,37 @@ public class AsioDriver {
   
   @SuppressWarnings("unused")
   private synchronized void fireResetRequest() {
-    /*
-     * Start the reset thread, which will block because the current thread 
-     * owns the lock on the AsioDriver object. It will reset the driver once this
-     * method has exited.
-     */
-    new Thread(resetRunnable).start();
     for (AsioDriverListener listener : listeners) {
       listener.resetRequest();
     }
   }
   
-  private synchronized void reset() {
-    shutdown();
-    init();
-  }
-  
   @SuppressWarnings("unused")
-  private void fireResyncRequest() {
+  private synchronized void fireResyncRequest() {
+	System.out.println("resync");
     for (AsioDriverListener listener : listeners) {
       listener.resyncRequest();
     }
   }
   
   @SuppressWarnings("unused")
-  private void fireLatenciesChanged(int inputLatency, int outputLatency) {
+  private synchronized void fireLatenciesChanged(int inputLatency, int outputLatency) {
+	System.out.println("latencies");
     for (AsioDriverListener listener : listeners) {
       listener.latenciesChanged(inputLatency, outputLatency);
     }
   }
   
   @SuppressWarnings("unused")
-  private void fireBufferSwitch(int[][] inputInt, int[][] outputInt,
-		                        float[][] inputFloat, float[][] outputFloat,
-		                        double[][] inputDouble, double[][] outputDouble) {
+  private synchronized void fireBufferSwitch(byte[][] inputByte, byte[][] outputByte,
+                                             short[][] inputShort, short[][] outputShort,
+                                             int[][] inputInt, int[][] outputInt,
+		                                     float[][] inputFloat, float[][] outputFloat,
+		                                     double[][] inputDouble, double[][] outputDouble) {
     for (AsioDriverListener listener : listeners) {
-      listener.bufferSwitch(inputInt, outputInt,
+      listener.bufferSwitch(inputByte, outputByte,
+                            inputShort, outputShort,
+                            inputInt, outputInt,
     		                inputFloat, outputFloat,
     		                inputDouble, outputDouble);
     }

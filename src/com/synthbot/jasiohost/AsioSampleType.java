@@ -21,32 +21,34 @@
 package com.synthbot.jasiohost;
 
 public enum AsioSampleType {
-  ASIOSTInt16MSB(0),
-  ASIOSTInt24MSB(1), // used for 20 bits as well
-  ASIOSTInt32MSB(2),
-  ASIOSTFloat32MSB(3), // IEEE 754 32 bit float
-  ASIOSTFloat64MSB(4), // IEEE 754 64 bit double float
-  ASIOSTInt32MSB16(8),
-  ASIOSTInt32MSB18(9),
-  ASIOSTInt32MSB20(10),
-  ASIOSTInt32MSB24(11),
-  ASIOSTInt16LSB(16),
-  ASIOSTInt24LSB(17),
-  ASIOSTInt32LSB(18),
-  ASIOSTFloat32LSB(19), // IEEE 754 32 bit float, as found on Intel x86 architecture
-  ASIOSTFloat64LSB(20), // IEEE 754 64 bit double float, as found on Intel x86 architecture
-  ASIOSTInt32LSB16(24),
-  ASIOSTInt32LSB18(25),
-  ASIOSTInt32LSB20(26),
-  ASIOSTInt32LSB24(27),
-  ASIOSTDSDInt8LSB1(32),
-  ASIOSTDSDInt8MSB1(33),
-  ASIOSTDSDInt8NER8(40);
+  ASIOSTInt16MSB(0, JavaNativeType.SHORT),
+  ASIOSTInt24MSB(1, JavaNativeType.INTEGER), // used for 18, 20 bits as well
+  ASIOSTInt32MSB(2, JavaNativeType.INTEGER),
+  ASIOSTFloat32MSB(3, JavaNativeType.FLOAT), // IEEE 754 32 bit float
+  ASIOSTFloat64MSB(4, JavaNativeType.DOUBLE), // IEEE 754 64 bit double float
+  ASIOSTInt32MSB16(8, JavaNativeType.INTEGER),
+  ASIOSTInt32MSB18(9, JavaNativeType.INTEGER),
+  ASIOSTInt32MSB20(10 ,JavaNativeType.INTEGER),
+  ASIOSTInt32MSB24(11, JavaNativeType.INTEGER),
+  ASIOSTInt16LSB(16, JavaNativeType.SHORT),
+  ASIOSTInt24LSB(17, JavaNativeType.INTEGER),
+  ASIOSTInt32LSB(18, JavaNativeType.INTEGER),
+  ASIOSTFloat32LSB(19, JavaNativeType.FLOAT), // IEEE 754 32 bit float, as found on Intel x86 architecture
+  ASIOSTFloat64LSB(20, JavaNativeType.DOUBLE), // IEEE 754 64 bit double float, as found on Intel x86 architecture
+  ASIOSTInt32LSB16(24, JavaNativeType.INTEGER),
+  ASIOSTInt32LSB18(25, JavaNativeType.INTEGER),
+  ASIOSTInt32LSB20(26, JavaNativeType.INTEGER),
+  ASIOSTInt32LSB24(27, JavaNativeType.INTEGER),
+  ASIOSTDSDInt8LSB1(32, JavaNativeType.BYTE),
+  ASIOSTDSDInt8MSB1(33, JavaNativeType.BYTE),
+  ASIOSTDSDInt8NER8(40, JavaNativeType.BYTE);
   
-  private int nativeEnum;
+  private int nativeEnum; // the native enum representing this type
+  private JavaNativeType nativeType; // the java type representing this sample type
   
-  private AsioSampleType(int nativeEnum) {
+  private AsioSampleType(int nativeEnum, JavaNativeType nativeType) {
     this.nativeEnum = nativeEnum;
+    this.nativeType = nativeType;
   }
   
   public static AsioSampleType getSampleType(int nativeEnum) {
@@ -56,6 +58,21 @@ public enum AsioSampleType {
       }
     }
     return null;
+  }
+  
+  /**
+   * Returns the Java number type which represents this sample type.
+   */
+  public JavaNativeType getJavaNativeType() {
+    return nativeType;
+  }
+  
+  public enum JavaNativeType {
+    BYTE,
+    SHORT,
+    INTEGER,
+    FLOAT,
+    DOUBLE;
   }
   
 }

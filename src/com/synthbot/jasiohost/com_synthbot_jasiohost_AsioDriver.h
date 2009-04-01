@@ -82,10 +82,10 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetChannelI
 /*
  * Class:     com_synthbot_jasiohost_AsioDriver
  * Method:    ASIOCreateBuffers
- * Signature: ([Lcom/synthbot/jasiohost/AsioChannelInfo;I[[I[[I[[F[[F[[D[[D)V
+ * Signature: ([Lcom/synthbot/jasiohost/AsioChannelInfo;I[[B[[B[[S[[S[[I[[I[[F[[F[[D[[D)V
  */
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
-  (JNIEnv *, jclass, jobjectArray, jint, jobjectArray, jobjectArray, jobjectArray, jobjectArray, jobjectArray, jobjectArray);
+  (JNIEnv *, jclass, jobjectArray, jint, jobjectArray, jobjectArray, jobjectArray, jobjectArray, jobjectArray, jobjectArray, jobjectArray, jobjectArray, jobjectArray, jobjectArray);
 
 /*
  * Class:     com_synthbot_jasiohost_AsioDriver

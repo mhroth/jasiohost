@@ -24,6 +24,12 @@ public interface AsioDriverListener {
 
   public void sampleRateDidChange(double sampleRate);
 
+  /**
+   * The driver requests a reset in the case of an unexpected failure or a device
+   * reconfiguration. As this request is being made in a callback, the driver should
+   * only be reset after this callback method has returned. Note that all 
+   * <code>AsioDriver</code> methods are synchronized.
+   */
   public void resetRequest();
   
   public void resyncRequest();
@@ -34,7 +40,9 @@ public interface AsioDriverListener {
    * @param input  The input buffer is filled with new data from the driver.
    * @param output  The output buffer should be filled with data to be sent to the driver.
    */
-  public void bufferSwitch(int[][] inputInt, int[][] outputInt,
-		                   float[][] inputFloat, float[][] outputFloat,
-		                   double[][] inputDouble, double[][] outputDouble);
+  public void bufferSwitch(byte[][] inputByte, byte[][] outputByte,
+                           short[][] inputShort, short[][] outputShort,
+                           int[][] inputInt, int[][] outputInt,
+                           float[][] inputFloat, float[][] outputFloat,
+                           double[][] inputDouble, double[][] outputDouble);
 }
