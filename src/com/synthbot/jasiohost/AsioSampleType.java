@@ -20,21 +20,67 @@
 
 package com.synthbot.jasiohost;
 
+/**
+ * This class enumerates the different types of sample formats supported by ASIO.
+ * The API makes a distinction between Big-Endian (denoted by <code>MSB</code>) and 
+ * Little-Endian (<code>LSB</code>) encodings, which are meaningless in Java, as all 
+ * numbers are Big-Endian encoded. <code>AsioSampleType</code>s are exposed for informative 
+ * purposes, however they are most useful for determining the Java native type to use 
+ * (<code>getJavaNativeType()</code>, and the number of bits per sample. The endianness of 
+ * the sample is resolved in the native library.
+ */
 public enum AsioSampleType {
+  /**
+   * 16-bit data word
+   */
   ASIOSTInt16MSB(0, JavaNativeType.SHORT),
-  ASIOSTInt24MSB(1, JavaNativeType.INTEGER), // used for 18, 20 bits as well
+  
+  /**
+   * This is the packed 24 bit format. 2 data words will spawn consecutive 6 bytes in memory.
+   * (Used for 18 and 20 bits as well, if they use this packed format). In Java it is represented
+   * the same as any of the <code>ASIOSTInt32MSB16</code> formats.
+   */
+  ASIOSTInt24MSB(1, JavaNativeType.INTEGER),
+  
+  /**
+   * 32-bit data word.
+   */
   ASIOSTInt32MSB(2, JavaNativeType.INTEGER),
-  ASIOSTFloat32MSB(3, JavaNativeType.FLOAT), // IEEE 754 32 bit float
-  ASIOSTFloat64MSB(4, JavaNativeType.DOUBLE), // IEEE 754 64 bit double float
+  
+  /**
+   * IEEE 754 32 bit float, as found on Intel x86 architecture.
+   */
+  ASIOSTFloat32MSB(3, JavaNativeType.FLOAT),
+  
+  /**
+   * IEEE 754 64 bit double float, as found on Intel x86 architecture
+   */
+  ASIOSTFloat64MSB(4, JavaNativeType.DOUBLE),
+  
+  /**
+   * Sample data fills the least significant 16 bits, the other bits are sign extended.
+   */
   ASIOSTInt32MSB16(8, JavaNativeType.INTEGER),
+  
+  /**
+   * Sample data fills the least significant 18 bits, the other bits are sign extended.
+   */
   ASIOSTInt32MSB18(9, JavaNativeType.INTEGER),
+  
+  /**
+   * Sample data fills the least significant 20 bits, the other bits are sign extended.
+   */
   ASIOSTInt32MSB20(10 ,JavaNativeType.INTEGER),
+  
+  /**
+   * Sample data fills the least significant 24 bits, the other bits are sign extended.
+   */
   ASIOSTInt32MSB24(11, JavaNativeType.INTEGER),
   ASIOSTInt16LSB(16, JavaNativeType.SHORT),
   ASIOSTInt24LSB(17, JavaNativeType.INTEGER),
   ASIOSTInt32LSB(18, JavaNativeType.INTEGER),
-  ASIOSTFloat32LSB(19, JavaNativeType.FLOAT), // IEEE 754 32 bit float, as found on Intel x86 architecture
-  ASIOSTFloat64LSB(20, JavaNativeType.DOUBLE), // IEEE 754 64 bit double float, as found on Intel x86 architecture
+  ASIOSTFloat32LSB(19, JavaNativeType.FLOAT),
+  ASIOSTFloat64LSB(20, JavaNativeType.DOUBLE),
   ASIOSTInt32LSB16(24, JavaNativeType.INTEGER),
   ASIOSTInt32LSB18(25, JavaNativeType.INTEGER),
   ASIOSTInt32LSB20(26, JavaNativeType.INTEGER),
