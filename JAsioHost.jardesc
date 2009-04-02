@@ -17,12 +17,12 @@
         <file path="/JAsioHost/src/com/synthbot/jasiohost/iasiothiscallresolver.h"/>
         <file path="/JAsioHost/COPYING.LESSER"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriverState.java"/>
-        <file path="/JAsioHost/src/com/synthbot/jasiohost/buildJah_win.sh"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioSampleType.java"/>
+        <file path="/JAsioHost/src/com/synthbot/jasiohost/buildJah_win.sh"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriverListener.java"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{JAsioHost.java"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriver.java"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{ExampleHost.java"/>
+        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriver.java"/>
         <file path="/JAsioHost/COPYING"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioChannelInfo.java"/>
         <file path="/JAsioHost/src/com/synthbot/jasiohost/com_synthbot_jasiohost_JAsioHost.h"/>
