@@ -44,7 +44,7 @@ public class JAsioHost {
    * @param driverName  The name of the driver to load, as returned by <code>getDriverNames</code>.
    * @return The named AsioDriver object.
    */
-  public static AsioDriver getAsioDriver(String driverName) throws AsioInitException {
+  public static AsioDriver getAsioDriver(String driverName) {
     if (driverName == null) {
       throw new NullPointerException();
     }

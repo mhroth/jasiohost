@@ -30,6 +30,7 @@ package com.synthbot.jasiohost;
  * the sample is resolved in the native library.
  */
 public enum AsioSampleType {
+  
   /**
    * 16-bit data word
    */

@@ -25,6 +25,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * All methods may throw an <code>AsioException</code>, which is a <code>RuntimeException</code> 
+ * (i.e., it is not required to be caught). The error message will have some information about
+ * what has gone wrong. Generally, it is not possible to recover from such errors, except for
+ * shutting down the driver.
  * Note that all methods can throw an <code>IllegalStateException</code> if the driver is not
  * in the appropriate state for that method to be called. For instance, if <code>start()</code>
  * is called before <code>createBuffers</code>, an <code>IllegalStateException</code> will be
@@ -46,7 +50,7 @@ public class AsioDriver {
   
   /*
    * Normally JAsioHost shuts down the driver. But it is put into finalize() in order to properly
-   * shut down the driver in case the JVM is otherwise shut down.
+   * shut down the driver in case the JVM is otherwise stopped.
    * (non-Javadoc)
    * @see java.lang.Object#finalize()
    */
@@ -72,7 +76,7 @@ public class AsioDriver {
    * @return  An AsioDriverInfo object is returned with name and version information
    * about the initialised driver.
    */
-  public synchronized AsioDriverInfo init() throws AsioInitException {
+  public synchronized AsioDriverInfo init() {
     if (!AsioDriverState.LOADED.equals(state)) {
       throw new IllegalStateException("AsioDriver must be in AsioDriverState.LOADED state in order " +
           "to be initialised. The current state is: " + state.toString());
@@ -80,7 +84,7 @@ public class AsioDriver {
     state = AsioDriverState.INITIALIZED;
     return ASIOInit();
   }
-  private native AsioDriverInfo ASIOInit() throws AsioInitException ;
+  private native AsioDriverInfo ASIOInit();
   
   /**
    * ASIOExit

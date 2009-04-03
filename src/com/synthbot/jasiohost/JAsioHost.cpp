@@ -395,7 +395,7 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOInit
         env->NewStringUTF(asioDriverInfo.errorMessage));
   } else {
     env->ThrowNew(
-      env->FindClass("com/synthbot/jasiohost/AsioInitException"),
+      env->FindClass("com/synthbot/jasiohost/AsioException"),
       asioDriverInfo.errorMessage);
     return NULL;
   }
@@ -472,7 +472,7 @@ JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetChannels
   if (errorCode == ASE_OK) {
     return (isInput == JNI_TRUE) ? (jint) numInputs : (jint) numOutputs;
   } else {
-    return -1;
+    return (jint) 0;
   }
 }
 
@@ -481,10 +481,22 @@ JNIEXPORT jdouble JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetSampleRa
   
   ASIOSampleRate sampleRate;
   ASIOError errorCode = ASIOGetSampleRate(&sampleRate);
-  if (errorCode == ASE_OK) {
-    return (jdouble) sampleRate;
-  } else {
-    return (jdouble) -1;
+  switch (errorCode) {
+    case ASE_OK: {
+      return (jdouble) sampleRate;
+    }
+    case ASE_NoClock: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Sample rate not present or unknown.");
+      return (jdouble) 0.0;
+    }
+    case ASE_NotPresent: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "No input or output is present.");
+      return (jdouble) -1;
+    }
   }
 }
 
@@ -532,10 +544,23 @@ JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetLatencies
   long inputLatency;
   long outputLatency;
   ASIOError errorCode = ASIOGetLatencies(&inputLatency, &outputLatency);
-  if (errorCode == ASE_OK) {
-    return (isInput == JNI_TRUE) ? (jint) inputLatency : (jint) outputLatency;
-  } else {
-    return -1;
+  switch (errorCode) {
+    case ASE_OK: {
+      // normal operation
+      return (isInput == JNI_TRUE) ? (jint) inputLatency : (jint) outputLatency;
+    }
+    case ASE_NotPresent: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          (isInput == JNI_TRUE) ? "The requested input does not exist." : "The requested output does not exist.");
+      return (jint) 0;
+    }
+    default: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Unknown error code.");
+      return (jint) 0;
+    }
   }
 }
 
@@ -546,21 +571,34 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetChannelI
   channelInfo.channel = (long) index;
   channelInfo.isInput = (isInput == JNI_TRUE) ? ASIOTrue : ASIOFalse;
   ASIOError errorCode = ASIOGetChannelInfo(&channelInfo);
-  if (errorCode == ASE_OK) {
-    return env->NewObject(
-        env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"),
-        env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), "<init>", "(IZZILcom/synthbot/jasiohost/AsioSampleType;Ljava/lang/String;)V"),
-        (jint) index,
-        isInput,
-        (channelInfo.isActive == ASIOTrue) ? JNI_TRUE : JNI_FALSE,
-        (jint) channelInfo.channelGroup,
-        env->CallStaticObjectMethod(
-            env->FindClass("com/synthbot/jasiohost/AsioSampleType"),
-            env->GetStaticMethodID(env->FindClass("com/synthbot/jasiohost/AsioSampleType"), "getSampleType", "(I)Lcom/synthbot/jasiohost/AsioSampleType;"),
-            channelInfo.type),
-        env->NewStringUTF(channelInfo.name));
-  } else {
-    return NULL;
+  
+  switch (errorCode) {
+    case ASE_OK: {
+      return env->NewObject(
+          env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"),
+          env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), "<init>", "(IZZILcom/synthbot/jasiohost/AsioSampleType;Ljava/lang/String;)V"),
+          (jint) index,
+          isInput,
+          (channelInfo.isActive == ASIOTrue) ? JNI_TRUE : JNI_FALSE,
+          (jint) channelInfo.channelGroup,
+          env->CallStaticObjectMethod(
+              env->FindClass("com/synthbot/jasiohost/AsioSampleType"),
+              env->GetStaticMethodID(env->FindClass("com/synthbot/jasiohost/AsioSampleType"), "getSampleType", "(I)Lcom/synthbot/jasiohost/AsioSampleType;"),
+              channelInfo.type),
+          env->NewStringUTF(channelInfo.name));
+    }
+    case ASE_NotPresent: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          (isInput == JNI_TRUE) ? "The requested input does not exist." : "The requested output does not exist.");
+      return NULL;
+    }
+    default: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Unknown error code.");
+      return NULL;
+    }
   }
 }
 
@@ -609,7 +647,38 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
   callbacks.asioMessage = &asioMessage;
   callbacks.bufferSwitchTimeInfo = &bufferSwitchTimeInfo;
   
-  ASIOCreateBuffers(bufferVars.bufferInfos, (long) bufferVars.numInitedChannels, (long) bufferVars.bufferSize, &callbacks);
+  ASIOError errorCode = ASIOCreateBuffers(bufferVars.bufferInfos, (long) bufferVars.numInitedChannels, (long) bufferVars.bufferSize, &callbacks);
+  
+  switch (errorCode) {
+    case ASE_OK: {
+      // normal operation
+      return;
+    }
+    case ASE_NoMemory: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Not enough memory is available for the audio buffers to be created.");
+      return;
+    }
+    case ASE_NotPresent: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "No input or output is present.");
+      return;
+    }
+    case ASE_InvalidMode: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "The buffer size is not supported.");
+      return;
+    }
+    default: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Unknown error code.");
+      return;
+    }
+  }
 }
 
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIODisposeBuffers
@@ -628,17 +697,85 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIODisposeBuffers
   env->DeleteGlobalRef(bufferVars.inputDoubleArrays);
   env->DeleteGlobalRef(bufferVars.outputDoubleArrays);
   
-  ASIODisposeBuffers();
+  ASIOError errorCode = ASIODisposeBuffers();
+  
+  switch (errorCode) {
+    case ASE_OK: {
+      // normal operation
+      return;
+    }
+    case ASE_InvalidMode: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "No buffers to dispose of. None were ever created.");
+      return;
+    }
+    case ASE_NotPresent: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "No input or output is present.");
+      return;
+    }
+    default: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Unknown error code.");
+    }
+  }
 }
 
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOStart
 (JNIEnv *env, jclass clazz) {
 
-  ASIOStart();
+  ASIOError errorCode = ASIOStart();
+  
+  switch (errorCode) {
+    case ASE_OK: {
+      // normal operation
+      return;
+    }
+    case ASE_NotPresent: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "No input or output is present.");
+      return;
+    }
+    case ASE_HWMalfunction: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "The hardware has malfunctioned.");
+      return;
+    }
+    default: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Unknown error code.");
+      return;
+    }
+  }
 }
 
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOStop
 (JNIEnv *env, jclass clazz) {
 
-  ASIOStop();
+  ASIOError errorCode = ASIOStop();
+  
+  switch (errorCode) {
+    case ASE_OK: {
+      // normal operation
+      return;
+    }
+    case ASE_NotPresent: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "No input or output is present.");
+      return;
+    }
+    default: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Unknown error code.");
+      return;
+    }
+  }
 }

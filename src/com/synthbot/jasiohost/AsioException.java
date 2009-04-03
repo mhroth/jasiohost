@@ -20,12 +20,8 @@
 
 package com.synthbot.jasiohost;
 
-public class AsioInitException extends Exception {
+public class AsioException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
-
-  public AsioInitException(String message) {
-    super(message);
-  }
 	
 }
