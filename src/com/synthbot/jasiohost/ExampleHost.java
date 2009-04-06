@@ -59,31 +59,26 @@ public class ExampleHost implements AsioDriverListener {
     asioDriver.createBuffers(activeChannels, bufferSize);
     asioDriver.start();
   }
-
-  public void bufferSwitch(byte[][] inputByte, byte[][] outputByte,
-                           short[][] inputShort, short[][] outputShort,
-                           int[][] inputInt, int[][] outputInt, 
-                           float[][] inputFloat, float[][] outputFloat, 
-                           double[][] inputDouble, double[][] outputDouble) {
-
+  
+  public void bufferSwitch(Set<AsioChannelInfo> channels) {
     for (int i = 0; i < bufferSize; i++, sampleIndex++) {
       double sampleValue = Math.sin(2 * Math.PI * sampleIndex * 440.0 / sampleRate);
-      for (AsioChannelInfo channelInfo : activeChannels) {
+      for (AsioChannelInfo channelInfo : channels) {
         switch (channelInfo.getSampleType().getJavaNativeType()) {
           case SHORT: {
-            outputShort[channelInfo.getChannelIndex()][i] = (short) (sampleValue * (double) Short.MAX_VALUE);
+            channelInfo.getByteBuffer().putShort((short) (sampleValue * (double) Short.MAX_VALUE));
             break;
           }
           case FLOAT: {
-            outputFloat[channelInfo.getChannelIndex()][i] = (float) sampleValue;
+            channelInfo.getByteBuffer().putFloat((float) sampleValue);
             break;
           }
           case DOUBLE: {
-            outputFloat[channelInfo.getChannelIndex()][i] = (float) sampleValue;
+            channelInfo.getByteBuffer().putDouble((double) sampleValue);
             break;
           }
           case INTEGER: {
-            outputInt[channelInfo.getChannelIndex()][i] = (int) (sampleValue * (double) Integer.MAX_VALUE) >> 2;
+            channelInfo.getByteBuffer().putInt((int) (sampleValue * (double) Integer.MAX_VALUE) >> 2);
             break;
           }
           default: {
@@ -124,7 +119,7 @@ public class ExampleHost implements AsioDriverListener {
 
   public static void main(String[] args) {
     ExampleHost host = new ExampleHost();
-    host.openControlPanel();
+    //host.openControlPanel();
     try {
       Thread.sleep(1000);
     } catch (Exception e) {

@@ -20,6 +20,8 @@
 
 package com.synthbot.jasiohost;
 
+import java.nio.ByteBuffer;
+
 public class AsioChannelInfo {
 
   private final int index;
@@ -28,6 +30,8 @@ public class AsioChannelInfo {
   private final int channelGroup;
   private final AsioSampleType sampleType;
   private final String name;
+  private final ByteBuffer[] nativeBuffers;
+  private int bufferIndex;
   
   private AsioChannelInfo(int index, boolean isInput, boolean isActive, int channelGroup, AsioSampleType sampleType, String name) {
     this.index = index;
@@ -36,6 +40,7 @@ public class AsioChannelInfo {
     this.channelGroup = channelGroup;
     this.sampleType = sampleType;
     this.name = name;
+    nativeBuffers = new ByteBuffer[2];
   }
   
   public int getChannelIndex() {
@@ -60,6 +65,24 @@ public class AsioChannelInfo {
   
   public String getChannelName() {
     return name;
+  }
+  
+  public ByteBuffer getByteBuffer() {
+    return nativeBuffers[bufferIndex];
+  }
+
+  protected void setBufferIndex(int bufferIndex) {
+    this.bufferIndex = bufferIndex;
+    nativeBuffers[bufferIndex].reset();
+  }
+  
+  /*
+   * Called by native code during <code>AsioDriver.createBuffers</code>.
+   */
+  @SuppressWarnings("unused")
+  private void setByteBuffers(ByteBuffer buffer0, ByteBuffer buffer1) {
+    nativeBuffers[0] = buffer0;
+    nativeBuffers[1] = buffer1;
   }
 
   /*

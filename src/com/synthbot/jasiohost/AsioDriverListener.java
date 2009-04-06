@@ -20,6 +20,8 @@
 
 package com.synthbot.jasiohost;
 
+import java.util.Set;
+
 public interface AsioDriverListener {
 
   public void sampleRateDidChange(double sampleRate);
@@ -50,12 +52,8 @@ public interface AsioDriverListener {
   public void latenciesChanged(int inputLatency, int outputLatency);
 
   /**
-   * @param input  The input buffer is filled with new data from the driver.
-   * @param output  The output buffer should be filled with data to be sent to the driver.
+   * 
+   * @param activeChannels
    */
-  public void bufferSwitch(byte[][] inputByte, byte[][] outputByte,
-                           short[][] inputShort, short[][] outputShort,
-                           int[][] inputInt, int[][] outputInt,
-                           float[][] inputFloat, float[][] outputFloat,
-                           double[][] inputDouble, double[][] outputDouble);
+  public void bufferSwitch(Set<AsioChannelInfo> activeChannels);
 }

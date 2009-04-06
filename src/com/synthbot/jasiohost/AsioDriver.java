@@ -21,6 +21,7 @@
 package com.synthbot.jasiohost;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +39,7 @@ public class AsioDriver {
   
   protected AsioDriverState state;
   private List<AsioDriverListener> listeners;
+  private Set<AsioChannelInfo> activeChannels;
   
   protected AsioDriver() {
     state = AsioDriverState.LOADED;
@@ -280,58 +282,16 @@ public class AsioDriver {
       throw new IllegalArgumentException();
     }
     */
-	  byte[][] inputByteArrays = new byte[getNumChannelsInput()][];
-	  byte[][] outputByteArrays = new byte[getNumChannelsOutput()][];
-	  short[][] inputShortArrays = new short[getNumChannelsInput()][];
-	  short[][] outputShortArrays = new short[getNumChannelsOutput()][];
-	  int[][] inputIntArrays = new int[getNumChannelsInput()][];
-	  int[][] outputIntArrays = new int[getNumChannelsOutput()][];
-	  float[][] inputFloatArrays = new float[getNumChannelsInput()][];
-	  float[][] outputFloatArrays = new float[getNumChannelsOutput()][];
-      double[][] inputDoubleArrays = new double[getNumChannelsInput()][];
-      double[][] outputDoubleArrays = new double[getNumChannelsOutput()][];
-    for (AsioChannelInfo channelInfo : channelsToInit) {
-      switch (channelInfo.getSampleType().getJavaNativeType()) {
-        case SHORT: {
-          (channelInfo.isInput() ? inputShortArrays : outputShortArrays)[channelInfo.getChannelIndex()] =  new short[bufferSize];
-          break;
-        }
-        case FLOAT: {
-          (channelInfo.isInput() ? inputFloatArrays : outputFloatArrays)[channelInfo.getChannelIndex()] =  new float[bufferSize];
-          break;
-        }
-        case DOUBLE: {
-          (channelInfo.isInput() ? inputDoubleArrays : outputDoubleArrays)[channelInfo.getChannelIndex()] =  new double[bufferSize];
-          break;
-        }
-        case INTEGER: {
-          (channelInfo.isInput() ? inputIntArrays : outputIntArrays)[channelInfo.getChannelIndex()] =  new int[bufferSize];
-          break;
-        }
-        case BYTE: {
-          (channelInfo.isInput() ? inputByteArrays : outputByteArrays)[channelInfo.getChannelIndex()] =  new byte[bufferSize];
-          break;
-        }
-      }
-    }
     
-	  ASIOCreateBuffers(
-	      channelsToInit.toArray(new AsioChannelInfo[0]), bufferSize,
-	      inputByteArrays, outputByteArrays,
-	      inputShortArrays, outputShortArrays,
-	      inputIntArrays, outputIntArrays,
-	      inputFloatArrays, outputFloatArrays,
-	      inputDoubleArrays, outputDoubleArrays);
+    // make a defensive copy of the the channel initialisation set
+    activeChannels = new HashSet<AsioChannelInfo>();
+    activeChannels.addAll(channelsToInit);
+    
+	  ASIOCreateBuffers(activeChannels.toArray(new AsioChannelInfo[0]), bufferSize);
 	  
 	  state = AsioDriverState.PREPARED;
   }
-  private static native void ASIOCreateBuffers(
-      AsioChannelInfo[] channelsToInit, int bufferSize,
-      byte[][] inputByte, byte[][] outputByte,
-      short[][] inputShort, short[][] outputShort,
-      int[][] inputInt, int[][] outputInt,
-      float[][] inputFloat, float[][] outputFloat,
-      double[][] inputDouble, double[][] outputDouble);
+  private static native void ASIOCreateBuffers(AsioChannelInfo[] channelsToInit, int bufferSize);
   
   /**
    * 
@@ -446,17 +406,12 @@ public class AsioDriver {
   }
   
   @SuppressWarnings("unused")
-  private synchronized void fireBufferSwitch(byte[][] inputByte, byte[][] outputByte,
-                                             short[][] inputShort, short[][] outputShort,
-                                             int[][] inputInt, int[][] outputInt,
-		                                     float[][] inputFloat, float[][] outputFloat,
-		                                     double[][] inputDouble, double[][] outputDouble) {
+  private synchronized void fireBufferSwitch(int bufferIndex) {
+    for (AsioChannelInfo channelInfo : activeChannels) {
+      channelInfo.setBufferIndex(bufferIndex);
+    }
     for (AsioDriverListener listener : listeners) {
-      listener.bufferSwitch(inputByte, outputByte,
-                            inputShort, outputShort,
-                            inputInt, outputInt,
-    		                inputFloat, outputFloat,
-    		                inputDouble, outputDouble);
+      listener.bufferSwitch(activeChannels);
     }
   }
 }
