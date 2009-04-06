@@ -32,7 +32,7 @@ public class AsioChannelInfo {
   private final AsioSampleType sampleType;
   private final String name;
   private final ByteBuffer[] nativeBuffers;
-  private int bufferIndex;
+  private volatile int bufferIndex;
   
   private AsioChannelInfo(int index, boolean isInput, boolean isActive, int channelGroup, AsioSampleType sampleType, String name) {
     this.index = index;
@@ -69,13 +69,14 @@ public class AsioChannelInfo {
   }
   
   /**
-   * Returns the current buffer to fill, with the position reset to zero.
+   * Returns the current buffer to fill, with the position reset to zero. The endian-ness
+   * of the buffer and of the underlying system has been accounted for.
    */
-  public synchronized ByteBuffer getByteBuffer() {
+  public ByteBuffer getByteBuffer() {
     return nativeBuffers[bufferIndex];
   }
 
-  protected synchronized void setBufferIndex(int bufferIndex) {
+  protected void setBufferIndex(int bufferIndex) {
     this.bufferIndex = bufferIndex;
     nativeBuffers[bufferIndex].rewind(); // reset position to start of buffer
   }

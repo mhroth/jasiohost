@@ -52,8 +52,9 @@ public interface AsioDriverListener {
   public void latenciesChanged(int inputLatency, int outputLatency);
 
   /**
-   * 
-   * @param activeChannels
+   * The next block of samples is ready. Input buffers are filled with new input,
+   * and output buffers should be filled at the end of this method.
+   * @param activeChannels  The set of channels which are active and have allocated buffers.
    */
   public void bufferSwitch(Set<AsioChannelInfo> activeChannels);
 }

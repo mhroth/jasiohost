@@ -119,7 +119,7 @@ public class ExampleHost implements AsioDriverListener {
 
   public static void main(String[] args) {
     ExampleHost host = new ExampleHost();
-    //host.openControlPanel();
+    host.openControlPanel();
     try {
       Thread.sleep(1000);
     } catch (Exception e) {

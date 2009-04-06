@@ -261,27 +261,27 @@ public class AsioDriver {
   }
   private static native AsioChannelInfo ASIOGetChannelInfo(int index, boolean isInput);
   
+  /**
+   * 
+   * @param channelsToInit
+   * @param bufferSize
+   */
   public synchronized void createBuffers(Set<AsioChannelInfo> channelsToInit, int bufferSize) {
     if (!AsioDriverState.INITIALIZED.equals(state)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("The ASIO driver must be in the INITIALIZED state in order to createBuffers().");
     }
 	  if (channelsToInit == null) {
-	    throw new NullPointerException();
+	    throw new NullPointerException("The set of channels to initialise may not be null.");
 	  }
 	  if (channelsToInit.contains(null)) {
-	    throw new IllegalArgumentException();
+	    throw new IllegalArgumentException("The set of channels to initialise may not contain a null value.");
 	  }
 	  if (channelsToInit.size() == 0) {
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException("The set of channels to initialise may not be empty.");
 	  }
-//  if ((bufferSize - getBufferMinSize()) % this.getBufferGranularity() != 0) {
-//    throw new IllegalArgumentException();
-//  }
-    /* ???
-    if (bufferSize != this.getBufferPreferredSize()) {
+    if ((bufferSize - getBufferMinSize()) % this.getBufferGranularity() != 0) {
       throw new IllegalArgumentException();
     }
-    */
     
     // make a defensive copy of the the channel initialisation set
     activeChannels = new HashSet<AsioChannelInfo>();
