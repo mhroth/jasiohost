@@ -69,8 +69,9 @@ public class AsioChannelInfo {
   }
   
   /**
-   * Returns the current buffer to fill, with the position reset to zero. The endian-ness
-   * of the buffer and of the underlying system has been accounted for.
+   * Returns the current buffer to read or write from, with the position reset to zero. The endian-ness
+   * of the buffer and of the underlying system has been accounted for. Note that input buffers 
+   * <code>isInput()</code> are read-only.
    */
   public ByteBuffer getByteBuffer() {
     return nativeBuffers[bufferIndex];
@@ -93,8 +94,14 @@ public class AsioChannelInfo {
       buffer0.order(ByteOrder.LITTLE_ENDIAN);
       buffer1.order(ByteOrder.LITTLE_ENDIAN);
     }
-    nativeBuffers[0] = buffer0;
-    nativeBuffers[1] = buffer1;
+    if (isInput) {
+      // input buffers are read only
+      nativeBuffers[0] = buffer0.asReadOnlyBuffer();
+      nativeBuffers[1] = buffer1.asReadOnlyBuffer();      
+    } else {
+      nativeBuffers[0] = buffer0;
+      nativeBuffers[1] = buffer1;
+    }
   }
 
   /*
