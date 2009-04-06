@@ -21,6 +21,7 @@
 package com.synthbot.jasiohost;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class AsioChannelInfo {
 
@@ -67,13 +68,16 @@ public class AsioChannelInfo {
     return name;
   }
   
-  public ByteBuffer getByteBuffer() {
+  /**
+   * Returns the current buffer to fill, with the position reset to zero.
+   */
+  public synchronized ByteBuffer getByteBuffer() {
     return nativeBuffers[bufferIndex];
   }
 
-  protected void setBufferIndex(int bufferIndex) {
+  protected synchronized void setBufferIndex(int bufferIndex) {
     this.bufferIndex = bufferIndex;
-    nativeBuffers[bufferIndex].reset();
+    nativeBuffers[bufferIndex].rewind(); // reset position to start of buffer
   }
   
   /*
@@ -81,6 +85,13 @@ public class AsioChannelInfo {
    */
   @SuppressWarnings("unused")
   private void setByteBuffers(ByteBuffer buffer0, ByteBuffer buffer1) {
+    if (sampleType.toString().endsWith("MSB")) {
+      buffer0.order(ByteOrder.BIG_ENDIAN); // set the endian-ness of the buffers
+      buffer1.order(ByteOrder.BIG_ENDIAN); // according to the sample type      
+    } else {
+      buffer0.order(ByteOrder.LITTLE_ENDIAN);
+      buffer1.order(ByteOrder.LITTLE_ENDIAN);
+    }
     nativeBuffers[0] = buffer0;
     nativeBuffers[1] = buffer1;
   }

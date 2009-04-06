@@ -45,17 +45,6 @@ typedef struct BufferVars {
 } BufferVars;
 BufferVars bufferVars = {0};
 
-int reverseBytesInt(int i) {
-  int j = i & 0x000000FF;
-  j <<= 8; i >>= 8;
-  j |= i & 0x000000FF;
-  j <<= 8; i >>= 8;
-  j |= i & 0x000000FF;
-  j <<= 8; i >>= 8;
-  j |= i & 0x000000FF;
-  return j;
-}
-
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *localJvm, void *reserved) {  
   jvm = localJvm; // store the JVM so that it can be used to attach ASIO threads to the JVM during callbacks
   asioDrivers = new AsioDrivers(); // set the global variable
@@ -88,10 +77,6 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
         jAsioDriver,
         fireBufferSwitchMid,
         (jint) bufferIndex);
-    if (env->ExceptionCheck() == JNI_TRUE) {
-      env->ExceptionDescribe();
-      env->ExceptionClear();
-    }
   }
   return NULL; // dunno what to do with this yet...
 }
