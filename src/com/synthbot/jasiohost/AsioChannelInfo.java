@@ -82,25 +82,21 @@ public class AsioChannelInfo {
     nativeBuffers[bufferIndex].rewind(); // reset position to start of buffer
   }
   
-  /*
-   * Called by native code during <code>AsioDriver.createBuffers</code>.
-   */
-  @SuppressWarnings("unused")
-  private void setByteBuffers(ByteBuffer buffer0, ByteBuffer buffer1) {
-    if (sampleType.toString().endsWith("MSB")) {
-      buffer0.order(ByteOrder.BIG_ENDIAN); // set the endian-ness of the buffers
-      buffer1.order(ByteOrder.BIG_ENDIAN); // according to the sample type      
+  protected void setByteBuffers(ByteBuffer buffer0, ByteBuffer buffer1) {
+    if (buffer0 == null || buffer1 == null) {
+      // the ByteBuffer references are cleared
+      nativeBuffers[0] = null;
+      nativeBuffers[1] = null;
     } else {
-      buffer0.order(ByteOrder.LITTLE_ENDIAN);
-      buffer1.order(ByteOrder.LITTLE_ENDIAN);
-    }
-    if (isInput) {
-      // input buffers are read only
-      nativeBuffers[0] = buffer0.asReadOnlyBuffer();
-      nativeBuffers[1] = buffer1.asReadOnlyBuffer();      
-    } else {
-      nativeBuffers[0] = buffer0;
-      nativeBuffers[1] = buffer1;
+      if (sampleType.toString().contains("MSB")) {
+        buffer0.order(ByteOrder.BIG_ENDIAN); // set the endian-ness of the buffers
+        buffer1.order(ByteOrder.BIG_ENDIAN); // according to the sample type      
+      } else {
+        buffer0.order(ByteOrder.LITTLE_ENDIAN);
+        buffer1.order(ByteOrder.LITTLE_ENDIAN);
+      }
+      nativeBuffers[0] = isInput ? buffer0.asReadOnlyBuffer() : buffer0;
+      nativeBuffers[1] = isInput ? buffer1.asReadOnlyBuffer() : buffer1;      
     }
   }
 

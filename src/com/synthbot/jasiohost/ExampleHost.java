@@ -56,7 +56,7 @@ public class ExampleHost implements AsioDriverListener {
   public void start() {
     bufferSize = asioDriver.getBufferPreferredSize();
     sampleRate = asioDriver.getSampleRate();
-    asioDriver.createBuffers(activeChannels, bufferSize);
+    asioDriver.createBuffers(activeChannels);
     asioDriver.start();
   }
   
@@ -64,25 +64,66 @@ public class ExampleHost implements AsioDriverListener {
     for (int i = 0; i < bufferSize; i++, sampleIndex++) {
       double sampleValue = Math.sin(2 * Math.PI * sampleIndex * 440.0 / sampleRate);
       for (AsioChannelInfo channelInfo : channels) {
-        switch (channelInfo.getSampleType().getJavaNativeType()) {
-          case SHORT: {
-            channelInfo.getByteBuffer().putShort((short) (sampleValue * (double) Short.MAX_VALUE));
+        switch (channelInfo.getSampleType()) {
+          case ASIOSTFloat64MSB:
+          case ASIOSTFloat64LSB: {
+            channelInfo.getByteBuffer().putDouble(sampleValue);
             break;
           }
-          case FLOAT: {
+          case ASIOSTFloat32MSB:
+          case ASIOSTFloat32LSB: {
             channelInfo.getByteBuffer().putFloat((float) sampleValue);
             break;
           }
-          case DOUBLE: {
-            channelInfo.getByteBuffer().putDouble((double) sampleValue);
-            break;
-          }
-          case INTEGER: {
+          case ASIOSTInt32MSB:
+          case ASIOSTInt32LSB: {
             channelInfo.getByteBuffer().putInt((int) (sampleValue * (double) Integer.MAX_VALUE) >> 2);
             break;
           }
-          default: {
-            // does nothing (silence)
+          case ASIOSTInt32MSB16:
+          case ASIOSTInt32LSB16: {
+            channelInfo.getByteBuffer().putInt((int) (sampleValue * (double) 0x00007FFF));
+            break;
+          }
+          case ASIOSTInt32MSB18:
+          case ASIOSTInt32LSB18: {
+            channelInfo.getByteBuffer().putInt((int) (sampleValue * (double) 0x0001FFFF));
+            break;
+          }
+          case ASIOSTInt32MSB20:
+          case ASIOSTInt32LSB20: {
+            channelInfo.getByteBuffer().putInt((int) (sampleValue * (double) 0x0007FFFF));
+            break;
+          }
+          case ASIOSTInt32MSB24:
+          case ASIOSTInt32LSB24: {
+            channelInfo.getByteBuffer().putInt((int) (sampleValue * (double) 0x007FFFFF));
+            break;
+          }
+          case ASIOSTInt16MSB:
+          case ASIOSTInt16LSB: {
+            channelInfo.getByteBuffer().putShort((short) (sampleValue * (double) Short.MAX_VALUE));
+            break;
+          }
+          case ASIOSTInt24MSB: {
+            // bytes have no endian-ness, and must therefore be placed manually
+            int sampleValueInt = (int) (sampleValue * (double) 0x007FFFFF);
+            channelInfo.getByteBuffer().put((byte) ((sampleValueInt >> 16) & 0x000000FF));
+            channelInfo.getByteBuffer().put((byte) ((sampleValueInt >> 8) & 0x000000FF));
+            channelInfo.getByteBuffer().put((byte) (sampleValueInt & 0x000000FF));
+            break;
+          }
+          case ASIOSTInt24LSB: {
+            int sampleValueInt = (int) (sampleValue * (double) 0x007FFFFF);
+            channelInfo.getByteBuffer().put((byte) (sampleValueInt & 0x000000FF));
+            channelInfo.getByteBuffer().put((byte) ((sampleValueInt >> 8) & 0x000000FF));
+            channelInfo.getByteBuffer().put((byte) ((sampleValueInt >> 16) & 0x000000FF));
+            break;
+          }
+          case ASIOSTDSDInt8MSB1:
+          case ASIOSTDSDInt8LSB1:
+          case ASIOSTDSDInt8NER8: {
+            // not supported. silence.
           }
         }
       }

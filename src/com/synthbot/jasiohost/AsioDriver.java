@@ -262,11 +262,12 @@ public class AsioDriver {
   private static native AsioChannelInfo ASIOGetChannelInfo(int index, boolean isInput);
   
   /**
-   * 
-   * @param channelsToInit
-   * @param bufferSize
+   * Creates audio buffers for the set of desinated channels. The buffer size is that as returned by
+   * <code>getBufferPreferredSize()</code>.
+   * @param channelsToInit  A <code>Set</code> of <code>AsioChannelInfo</code> objects designating the
+   * input and output channels to initialise and create audio buffers for.
    */
-  public synchronized void createBuffers(Set<AsioChannelInfo> channelsToInit, int bufferSize) {
+  public synchronized void createBuffers(Set<AsioChannelInfo> channelsToInit) {
     if (!AsioDriverState.INITIALIZED.equals(state)) {
       throw new IllegalStateException("The ASIO driver must be in the INITIALIZED state in order to createBuffers().");
     }
@@ -279,15 +280,12 @@ public class AsioDriver {
 	  if (channelsToInit.size() == 0) {
         throw new IllegalArgumentException("The set of channels to initialise may not be empty.");
 	  }
-    if ((bufferSize - getBufferMinSize()) % this.getBufferGranularity() != 0) {
-      throw new IllegalArgumentException();
-    }
     
     // make a defensive copy of the the channel initialisation set
-    activeChannels = new HashSet<AsioChannelInfo>();
+    activeChannels = new HashSet<AsioChannelInfo>(channelsToInit.size());
     activeChannels.addAll(channelsToInit);
     
-	  ASIOCreateBuffers(activeChannels.toArray(new AsioChannelInfo[0]), bufferSize);
+	  ASIOCreateBuffers(activeChannels.toArray(new AsioChannelInfo[0]), getBufferPreferredSize());
 	  
 	  state = AsioDriverState.PREPARED;
   }
@@ -300,6 +298,10 @@ public class AsioDriver {
     if (!AsioDriverState.PREPARED.equals(state)) {
       throw new IllegalStateException();
     }
+    for (AsioChannelInfo channelInfo : activeChannels) {
+      channelInfo.setByteBuffers(null, null); // clear the ByteBuffer references
+    }
+    activeChannels = null;
     ASIODisposeBuffers();
     state = AsioDriverState.INITIALIZED;
   }

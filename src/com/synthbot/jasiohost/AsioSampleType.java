@@ -34,68 +34,66 @@ public enum AsioSampleType {
   /**
    * 16-bit data word
    */
-  ASIOSTInt16MSB(0, JavaNativeType.SHORT),
+  ASIOSTInt16MSB(0),
   
   /**
    * This is the packed 24 bit format. 2 data words will spawn consecutive 6 bytes in memory.
    * (Used for 18 and 20 bits as well, if they use this packed format). In Java it is represented
    * the same as any of the <code>ASIOSTInt32MSB16</code> formats.
    */
-  ASIOSTInt24MSB(1, JavaNativeType.INTEGER),
+  ASIOSTInt24MSB(1),
   
   /**
    * 32-bit data word.
    */
-  ASIOSTInt32MSB(2, JavaNativeType.INTEGER),
+  ASIOSTInt32MSB(2),
   
   /**
    * IEEE 754 32 bit float, as found on Intel x86 architecture.
    */
-  ASIOSTFloat32MSB(3, JavaNativeType.FLOAT),
+  ASIOSTFloat32MSB(3),
   
   /**
    * IEEE 754 64 bit double float, as found on Intel x86 architecture
    */
-  ASIOSTFloat64MSB(4, JavaNativeType.DOUBLE),
+  ASIOSTFloat64MSB(4),
   
   /**
    * Sample data fills the least significant 16 bits, the other bits are sign extended.
    */
-  ASIOSTInt32MSB16(8, JavaNativeType.INTEGER),
+  ASIOSTInt32MSB16(8),
   
   /**
    * Sample data fills the least significant 18 bits, the other bits are sign extended.
    */
-  ASIOSTInt32MSB18(9, JavaNativeType.INTEGER),
+  ASIOSTInt32MSB18(9),
   
   /**
    * Sample data fills the least significant 20 bits, the other bits are sign extended.
    */
-  ASIOSTInt32MSB20(10 ,JavaNativeType.INTEGER),
+  ASIOSTInt32MSB20(10),
   
   /**
    * Sample data fills the least significant 24 bits, the other bits are sign extended.
    */
-  ASIOSTInt32MSB24(11, JavaNativeType.INTEGER),
-  ASIOSTInt16LSB(16, JavaNativeType.SHORT),
-  ASIOSTInt24LSB(17, JavaNativeType.INTEGER),
-  ASIOSTInt32LSB(18, JavaNativeType.INTEGER),
-  ASIOSTFloat32LSB(19, JavaNativeType.FLOAT),
-  ASIOSTFloat64LSB(20, JavaNativeType.DOUBLE),
-  ASIOSTInt32LSB16(24, JavaNativeType.INTEGER),
-  ASIOSTInt32LSB18(25, JavaNativeType.INTEGER),
-  ASIOSTInt32LSB20(26, JavaNativeType.INTEGER),
-  ASIOSTInt32LSB24(27, JavaNativeType.INTEGER),
-  ASIOSTDSDInt8LSB1(32, JavaNativeType.BYTE),
-  ASIOSTDSDInt8MSB1(33, JavaNativeType.BYTE),
-  ASIOSTDSDInt8NER8(40, JavaNativeType.BYTE);
+  ASIOSTInt32MSB24(11),
+  ASIOSTInt16LSB(16),
+  ASIOSTInt24LSB(17),
+  ASIOSTInt32LSB(18),
+  ASIOSTFloat32LSB(19),
+  ASIOSTFloat64LSB(20),
+  ASIOSTInt32LSB16(24),
+  ASIOSTInt32LSB18(25),
+  ASIOSTInt32LSB20(26),
+  ASIOSTInt32LSB24(27),
+  ASIOSTDSDInt8LSB1(32),
+  ASIOSTDSDInt8MSB1(33),
+  ASIOSTDSDInt8NER8(40);
   
   private int nativeEnum; // the native enum representing this type
-  private JavaNativeType nativeType; // the java type representing this sample type
   
-  private AsioSampleType(int nativeEnum, JavaNativeType nativeType) {
+  private AsioSampleType(int nativeEnum) {
     this.nativeEnum = nativeEnum;
-    this.nativeType = nativeType;
   }
   
   public static AsioSampleType getSampleType(int nativeEnum) {
@@ -106,20 +104,4 @@ public enum AsioSampleType {
     }
     return null;
   }
-  
-  /**
-   * Returns the Java number type which represents this sample type.
-   */
-  public JavaNativeType getJavaNativeType() {
-    return nativeType;
-  }
-  
-  public enum JavaNativeType {
-    BYTE,
-    SHORT,
-    INTEGER,
-    FLOAT,
-    DOUBLE;
-  }
-  
 }
