@@ -42,7 +42,8 @@ typedef struct BufferVars {
   ASIOSampleType *sampleTypes;
   int numInitedChannels; // length of bufferInfos and sampleTypes arrays
   int bufferSize;
-} BufferVars;
+  ASIOCallbacks *callbacks;
+};
 BufferVars bufferVars = {0};
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *localJvm, void *reserved) {  
@@ -439,13 +440,13 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
   
   bufferVars.bufferSize = (int) bufferSize;
   
-  ASIOCallbacks callbacks;
-  callbacks.bufferSwitch = &bufferSwitch;
-  callbacks.sampleRateDidChange = &sampleRateDidChange;
-  callbacks.asioMessage = &asioMessage;
-  callbacks.bufferSwitchTimeInfo = &bufferSwitchTimeInfo;
+  bufferVars.callbacks = (ASIOCallbacks *) malloc(sizeof(ASIOCallbacks));
+  bufferVars.callbacks->bufferSwitch = &bufferSwitch;
+  bufferVars.callbacks->sampleRateDidChange = &sampleRateDidChange;
+  bufferVars.callbacks->asioMessage = &asioMessage;
+  bufferVars.callbacks->bufferSwitchTimeInfo = &bufferSwitchTimeInfo;
   
-  ASIOError errorCode = ASIOCreateBuffers(bufferVars.bufferInfos, (long) bufferVars.numInitedChannels, (long) bufferVars.bufferSize, &callbacks);
+  ASIOError errorCode = ASIOCreateBuffers(bufferVars.bufferInfos, (long) bufferVars.numInitedChannels, (long) bufferVars.bufferSize, bufferVars.callbacks);
   
   switch (errorCode) {
     case ASE_OK: {
@@ -560,6 +561,7 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIODisposeBuffers
 
   free(bufferVars.bufferInfos);
   free(bufferVars.sampleTypes);
+  free(bufferVars.callbacks);
   
   ASIOError errorCode = ASIODisposeBuffers();
   

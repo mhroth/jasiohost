@@ -77,7 +77,7 @@ public class ExampleHost implements AsioDriverListener {
           }
           case ASIOSTInt32MSB:
           case ASIOSTInt32LSB: {
-            channelInfo.getByteBuffer().putInt((int) (sampleValue * (double) Integer.MAX_VALUE) >> 2);
+            channelInfo.getByteBuffer().putInt((int) (sampleValue * (double) Integer.MAX_VALUE));
             break;
           }
           case ASIOSTInt32MSB16:
