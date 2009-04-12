@@ -127,13 +127,9 @@ public class AsioChannelInfo {
 	sb.append(isInput ? "Input" : "Output");
 	sb.append(" Channel "); sb.append(Integer.toString(index));
 	sb.append(": "); sb.append(name);
-	sb.append("\n");
-	sb.append("  sample type: "); sb.append(sampleType.toString());
-	sb.append("\n");
-	sb.append("  channel group: "); sb.append(Integer.toString(channelGroup));
-	sb.append("\n");
-	sb.append("  active: "); sb.append(Boolean.toString(isActive));
-	sb.append("\n");
+	sb.append(", "); sb.append(sampleType.toString());
+	sb.append(", group "); sb.append(Integer.toString(channelGroup));
+	sb.append(", "); sb.append(isActive ? "active" : "inactive");
 	return sb.toString();
   }  
 }

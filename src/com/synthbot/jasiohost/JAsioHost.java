@@ -85,8 +85,8 @@ public class JAsioHost {
     String[] driverNames = new String[32];
     int numNames = getDriverNames(driverNames);
     List<String> nameList = new ArrayList<String>(numNames);
-    for (String name : driverNames) {
-      nameList.add(name);
+    for (int i = 0; i < numNames; i++) {
+      nameList.add(driverNames[i]);
     }
     return nameList;
   }

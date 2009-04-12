@@ -40,7 +40,6 @@ public class ExampleHost implements AsioDriverListener {
 
   public ExampleHost() {
     List<String> driverNameList = JAsioHost.getDriverNames();
-    asioDriver = null;
     asioDriver = JAsioHost.getAsioDriver(driverNameList.get(0));
     activeChannels = new HashSet<AsioChannelInfo>();
     activeChannels.add(asioDriver.getChannelInfoOutput(0));
