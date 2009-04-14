@@ -43,6 +43,7 @@ typedef struct BufferVars {
   int numInitedChannels; // length of bufferInfos and sampleTypes arrays
   int bufferSize;
   ASIOCallbacks *callbacks;
+  long samplePosition;
 };
 BufferVars bufferVars = {0};
 
@@ -79,7 +80,14 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
         fireBufferSwitchMid,
         (jint) bufferIndex);
   }
-  return NULL; // dunno what to do with this yet...
+  
+  /*
+  timeInfo->timeInfo.speed = 1.0;
+  timeInfo->timeInfo.systemTime = ((long) timeGetTime()) * 1000; // timestamp in nanoseconds
+  timeInfo->timeInfo.samplePosition = bufferVars.samplePosition;
+  timeInfo->timeInfo.flags = kSpeedValid | kSystemTimeValid | kSamplePositionValid;
+  */
+  return NULL;
 }
 
 // from ASIOv1
@@ -451,16 +459,13 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
   switch (errorCode) {
     case ASE_OK: {
       for (int i = 0; i < bufferVars.numInitedChannels; i++) {
+        jobject byteBuffer0 = NULL;
+        jobject byteBuffer1 = NULL;
         switch (bufferVars.sampleTypes[i]) {
           case ASIOSTFloat64MSB:
           case ASIOSTFloat64LSB: {
-            env->CallVoidMethod(
-                env->GetObjectArrayElement(channelsToInit, (jsize) i),
-                env->GetMethodID(
-                    env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), 
-                    "setByteBuffers", "(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V"),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 8),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 8));
+            byteBuffer0 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 8);
+            byteBuffer1 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 8);
             break;
           }
           case ASIOSTFloat32MSB:
@@ -475,47 +480,27 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
           case ASIOSTInt32LSB18:
           case ASIOSTInt32LSB20:
           case ASIOSTInt32LSB24: {
-            env->CallVoidMethod(
-                env->GetObjectArrayElement(channelsToInit, (jsize) i),
-                env->GetMethodID(
-                    env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), 
-                    "setByteBuffers", "(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V"),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 4),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 4));
+            byteBuffer0 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 4);
+            byteBuffer1 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 4);
             break;
           }
           case ASIOSTInt24MSB:
           case ASIOSTInt24LSB: {
-            env->CallVoidMethod(
-                env->GetObjectArrayElement(channelsToInit, (jsize) i),
-                env->GetMethodID(
-                    env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), 
-                    "setByteBuffers", "(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V"),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 3),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 3));
+            byteBuffer0 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 3);
+            byteBuffer1 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 3);
             break;
           }
           case ASIOSTInt16MSB:
           case ASIOSTInt16LSB: {
-            env->CallVoidMethod(
-                env->GetObjectArrayElement(channelsToInit, (jsize) i),
-                env->GetMethodID(
-                    env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), 
-                    "setByteBuffers", "(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V"),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 2),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 2));
+            byteBuffer0 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 2);
+            byteBuffer1 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 2);
             break;
           }
           case ASIOSTDSDInt8MSB1:
           case ASIOSTDSDInt8LSB1:
           case ASIOSTDSDInt8NER8: {
-            env->CallVoidMethod(
-                env->GetObjectArrayElement(channelsToInit, (jsize) i),
-                env->GetMethodID(
-                    env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), 
-                    "setByteBuffers", "(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V"),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 1),
-                env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 1));
+            byteBuffer0 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[0], bufferSize * 1);
+            byteBuffer1 = env->NewDirectByteBuffer(bufferVars.bufferInfos[i].buffers[1], bufferSize * 1);
             break;
           }
           default: {
@@ -526,6 +511,24 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
           }
         }
         
+        if (byteBuffer0 == NULL || byteBuffer1 == NULL) {
+          if (env->ExceptionCheck() == JNI_TRUE) {
+            env->Throw(env->ExceptionOccurred());
+            return;
+          } else {
+            env->ThrowNew(
+                env->FindClass("com/synthbot/jasiohost/AsioException"),
+                "JNI access to direct buffers is not supported by this virtual machine.");
+            return;
+          }
+        }
+        env->CallVoidMethod(
+            env->GetObjectArrayElement(channelsToInit, (jsize) i),
+            env->GetMethodID(
+                env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), 
+                "setByteBuffers", "(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V"),
+            byteBuffer0,
+            byteBuffer1);
       }
       return;
     }
