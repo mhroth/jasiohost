@@ -75,11 +75,17 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long bufferIndex, ASIOBool di
   JNIEnv *env = NULL;
   jint res = jvm->AttachCurrentThreadAsDaemon((void **) &env, NULL);
   if (res == JNI_OK && env != NULL) {
-    env->CallVoidMethod(
-        jAsioDriver,
-        fireBufferSwitchMid,
-        (jint) bufferIndex);
+    if (directProcess == ASIOTrue) {
+      env->CallVoidMethod(
+          jAsioDriver,
+          fireBufferSwitchMid,
+          (jint) bufferIndex);
+    } else {
+      // not sure what do to in this case yet
+    }
   }
+  
+  ASIOOutputReady();
   
   /*
   timeInfo->timeInfo.speed = 1.0;
@@ -98,7 +104,7 @@ void bufferSwitch(long bufferIndex, ASIOBool directProcess) {
   if (errorCode == ASE_OK) {
     timeInfo.timeInfo.flags = kSystemTimeValid | kSamplePositionValid;
   }
-  bufferSwitchTimeInfo (&timeInfo, bufferIndex, directProcess);
+  bufferSwitchTimeInfo(&timeInfo, bufferIndex, directProcess);
 }
 
 void sampleRateDidChange(ASIOSampleRate sampleRate) {
