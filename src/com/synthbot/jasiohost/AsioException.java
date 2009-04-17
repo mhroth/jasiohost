@@ -23,5 +23,9 @@ package com.synthbot.jasiohost;
 public class AsioException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
+  
+  public AsioException(String message) {
+    super(message);
+  }
 	
 }

@@ -3,12 +3,12 @@
  * 
  *  This file is part of JAsioHost.
  *
- *  JVstHost is free software: you can redistribute it and/or modify
+ *  JAsioHost is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  JVstHost is distributed in the hope that it will be useful,
+ *  JAsioHost is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU Lesser General Public License for more details.
@@ -38,12 +38,25 @@ import java.util.Set;
 public class AsioDriver {
   
   protected AsioDriverState state;
-  private List<AsioDriverListener> listeners;
+  private final List<AsioDriverListener> listeners;
   private Set<AsioChannelInfo> activeChannels;
+  private final AsioChannelInfo[] inputChannels;
+  private final AsioChannelInfo[] outputChannels;
+  private final AsioDriverInfo driverInfo;
   
   protected AsioDriver() {
     state = AsioDriverState.LOADED;
     listeners = new ArrayList<AsioDriverListener>();
+    driverInfo = init(); // initialise the driver
+    
+    inputChannels = new AsioChannelInfo[getNumChannelsInput()];
+    for (int i = 0; i < inputChannels.length; i++) {
+      inputChannels[i] = ASIOGetChannelInfo(i, true);
+    }
+    outputChannels = new AsioChannelInfo[getNumChannelsOutput()];
+    for (int i = 0; i < outputChannels.length; i++) {
+      outputChannels[i] = ASIOGetChannelInfo(i, false);
+    }
   }
   
   static {
@@ -64,6 +77,27 @@ public class AsioDriver {
     } finally {
       super.finalize();
     }
+  }
+  
+  /**
+   * Returns the name of the driver.
+   */
+  public synchronized String getDriverName() {
+    return driverInfo.getDriverName();
+  }
+  
+  /**
+   * Returns the version of the driver.
+   */
+  public synchronized int getDriverVersion() {
+    return driverInfo.getDriverVersion();
+  }
+  
+  /**
+   * Returns the version of ASIO which this driver uses (currently 1 or 2).
+   */
+  public synchronized int getAsioVersion() {
+    return driverInfo.getAsioVersion();
   }
   
   /**
@@ -220,9 +254,9 @@ public class AsioDriver {
   private static native int ASIOGetLatencies(boolean isInput);
   
   /**
-   * 
-   * @param index
-   * @return
+   * Get information about an input channel.
+   * @param index  The input channel index to get information about.
+   * @return An <code>AsioChannelInfo</code> object representing the requested input channel.
    * @throws IndexOutOfBoundsException  Thrown if the requested channel index is out of bounds. The
    * channel does not exist.
    */
@@ -231,15 +265,16 @@ public class AsioDriver {
       throw new IllegalStateException();
     }
     if (index < 0 || index >= getNumChannelsInput()) {
-      throw new IndexOutOfBoundsException();
+      throw new IndexOutOfBoundsException("The input index must be in [0," + 
+          Integer.toString(getNumChannelsInput()) + "): " + Integer.toString(index));
     }
-    return ASIOGetChannelInfo(index, true);
+    return inputChannels[index];
   }
   
   /**
-   * 
-   * @param index
-   * @return
+   * Get information about an output channel.
+   * @param index  The output channel index to get information about.
+   * @return An <code>AsioChannelInfo</code> object representing the requested output channel.
    * @throws IndexOutOfBoundsException  Thrown if the requested channel index is out of bounds. The
    * channel does not exist.
    */
@@ -248,16 +283,10 @@ public class AsioDriver {
       throw new IllegalStateException();
     }
     if (index < 0 || index >= getNumChannelsOutput()) {
-      throw new IndexOutOfBoundsException();
+      throw new IndexOutOfBoundsException("The output index must be in [0," + 
+          Integer.toString(getNumChannelsOutput()) + "): " + Integer.toString(index));
     }
-    AsioChannelInfo channelInfo = ASIOGetChannelInfo(index, false);
-    if (channelInfo.getSampleType().toString().endsWith("MSB")) {
-      System.err.println("WARNING: JAsioHost does not support the sample type of this channel " +
-          "at the moment (" + channelInfo.getSampleType().toString() + "). Undefined behaviour " +
-          "will result if the driver is start()ed. Nothing too bad though. Probably just noise at " +
-          "the output or silence.");
-    }
-    return channelInfo;
+    return outputChannels[index];
   }
   private static native AsioChannelInfo ASIOGetChannelInfo(int index, boolean isInput);
   
@@ -278,7 +307,7 @@ public class AsioDriver {
 	    throw new IllegalArgumentException("The set of channels to initialise may not contain a null value.");
 	  }
 	  if (channelsToInit.size() == 0) {
-        throw new IllegalArgumentException("The set of channels to initialise may not be empty.");
+      throw new IllegalArgumentException("The set of channels to initialise may not be empty.");
 	  }
     
     // make a defensive copy of the the channel initialisation set
@@ -338,27 +367,51 @@ public class AsioDriver {
    */
   public synchronized void returnToState(AsioDriverState targetState) {
     if (targetState == null) {
-      throw new NullPointerException();
+      throw new NullPointerException("Target state may not be null.");
     }
     if (targetState.ordinal() < state.ordinal()) {
       switch (state) {
-    	case RUNNING: {
-    		stop();
-    		if (state.equals(targetState)) {
-              break;
-    		}
-    		// allow fall-throughs
-    	}
-    	case PREPARED: {
-    		disposeBuffers();
-    		if (state.equals(targetState)) {
-              break;
+      	case RUNNING: {
+      		stop();
+      		if (state.equals(targetState)) {
+            break;
       		}
-    	}
-    	case INITIALIZED: {
-    		exit();
+      		// allow fall-throughs
+      	}
+      	case PREPARED: {
+      		disposeBuffers();
+      		if (state.equals(targetState)) {
+            break;
+        	}
+      	}
+      	case INITIALIZED: {
+      		exit();
         }
       }
+    }
+  }
+  
+  /**
+   * Add a new <code>AsioDriverListener</code>. Listeners can only be updated while the driver
+   * is in the LOADED or INITIALISED state.
+   * @param listener
+   */
+  public synchronized void addAsioDriverListener(AsioDriverListener listener) {
+    if (state.ordinal() < AsioDriverState.PREPARED.ordinal()) {
+      if (!listeners.contains(listener)) {
+        listeners.add(listener);
+      }
+    }
+  }
+  
+  /**
+   * Unregister an <code>AsioDriverListener</code>. Listeners can only be updated while the driver
+   * is in the LOADED or INITIALISED state.
+   * @param listener
+   */
+  public synchronized void removeAsioDriverListener(AsioDriverListener listener) {
+    if (state.ordinal() < AsioDriverState.PREPARED.ordinal()) {
+      listeners.remove(listener);        
     }
   }
   
@@ -367,53 +420,48 @@ public class AsioDriver {
    * Callbacks
    */
   
-  public synchronized void addAsioDriverListener(AsioDriverListener listener) {
-    if (!listeners.contains(listener)) {
-      listeners.add(listener);
-    }
-  }
-  
-  public synchronized void removeAsioDriverListener(AsioDriverListener listener) {
-    listeners.remove(listener);
-  }
-  
   @SuppressWarnings("unused")
-  private synchronized void fireSampleRateDidChange(double sampleRate) {
+  private void fireSampleRateDidChange(double sampleRate) {
     for (AsioDriverListener listener : listeners) {
       listener.sampleRateDidChange(sampleRate);
     }
   }
   
   @SuppressWarnings("unused")
-  private synchronized void fireResetRequest() {
+  private void fireResetRequest() {
     for (AsioDriverListener listener : listeners) {
       listener.resetRequest();
     }
   }
   
   @SuppressWarnings("unused")
-  private synchronized void fireResyncRequest() {
-	System.out.println("resync");
+  private void fireResyncRequest() {
     for (AsioDriverListener listener : listeners) {
       listener.resyncRequest();
     }
   }
   
   @SuppressWarnings("unused")
-  private synchronized void fireLatenciesChanged(int inputLatency, int outputLatency) {
-	System.out.println("latencies");
+  private void fireBufferSizeChanged(int bufferSize) {
+    for (AsioDriverListener listener : listeners) {
+      listener.bufferSizeChanged(bufferSize);
+    }
+  }
+  
+  @SuppressWarnings("unused")
+  private void fireLatenciesChanged(int inputLatency, int outputLatency) {
     for (AsioDriverListener listener : listeners) {
       listener.latenciesChanged(inputLatency, outputLatency);
     }
   }
   
   @SuppressWarnings("unused")
-  private synchronized void fireBufferSwitch(int bufferIndex) {
+  private void fireBufferSwitch(long systemTime, long samplePosition, int bufferIndex) {
     for (AsioChannelInfo channelInfo : activeChannels) {
       channelInfo.setBufferIndex(bufferIndex);
     }
     for (AsioDriverListener listener : listeners) {
-      listener.bufferSwitch(activeChannels);
+      listener.bufferSwitch(systemTime, samplePosition, activeChannels);
     }
   }
 }

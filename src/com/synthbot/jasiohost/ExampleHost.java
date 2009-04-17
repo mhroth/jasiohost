@@ -3,12 +3,12 @@
  * 
  *  This file is part of JAsioHost.
  *
- *  JVstHost is free software: you can redistribute it and/or modify
+ *  JAsioHost is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  JVstHost is distributed in the hope that it will be useful,
+ *  JAsioHost is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU Lesser General Public License for more details.
@@ -59,7 +59,7 @@ public class ExampleHost implements AsioDriverListener {
     asioDriver.start();
   }
   
-  public void bufferSwitch(Set<AsioChannelInfo> channels) {
+  public void bufferSwitch(long systemTime, long samplePosition, Set<AsioChannelInfo> channels) {
     for (int i = 0; i < bufferSize; i++, sampleIndex++) {
       double sampleValue = Math.sin(2 * Math.PI * sampleIndex * 440.0 / sampleRate);
       for (AsioChannelInfo channelInfo : channels) {
@@ -128,10 +128,13 @@ public class ExampleHost implements AsioDriverListener {
       }
     }
   }
+  
+  public void bufferSizeChanged(int bufferSize) {
+    // TODO Auto-generated method stub
+  }
 
   public void latenciesChanged(int inputLatency, int outputLatency) {
     // TODO Auto-generated method stub
-
   }
 
   public void resetRequest() {
@@ -149,12 +152,10 @@ public class ExampleHost implements AsioDriverListener {
 
   public void resyncRequest() {
     // TODO Auto-generated method stub
-
   }
 
   public void sampleRateDidChange(double sampleRate) {
     // TODO Auto-generated method stub
-
   }
 
   public static void main(String[] args) {

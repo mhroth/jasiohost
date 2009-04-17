@@ -46,7 +46,7 @@ public class JAsioHost {
    */
   public static AsioDriver getAsioDriver(String driverName) {
     if (driverName == null) {
-      throw new NullPointerException();
+      throw new NullPointerException("The driver name cannot be null.");
     }
     if (JAsioHost.getCurrentDriverName().equals(driverName)) {
       return asioDriver;
@@ -58,9 +58,12 @@ public class JAsioHost {
       }
 
       JAsioHost.shutdownAndUnloadDriver();
-      loadDriver(driverName);
+      boolean driverLoaded = loadDriver(driverName);
+      if (!driverLoaded) {
+        throw new AsioException("The driver was not successfully loaded into memory. No information" +
+        		"as to why is available.");
+      }
       asioDriver = new AsioDriver();
-      asioDriver.init();
       return asioDriver;
     }
   }
@@ -74,6 +77,11 @@ public class JAsioHost {
     return asioDriver;
   }
 
+  /**
+   * Loads the named driver into memory.
+   * @param driverName  The ASIO driver to load.
+   * @return  True if the driver was successfully loaded. False otherwise.
+   */
   private static native boolean loadDriver(String driverName);
 
   private static native void removeCurrentDriver();

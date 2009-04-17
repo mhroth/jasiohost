@@ -49,12 +49,21 @@ public interface AsioDriverListener {
   
   public void resyncRequest();
   
+  /**
+   * The driver has a new preferred buffer size. The host should make an effort to
+   * accomodate the driver.
+   * @param preferredBufferSize  The new preferred buffer size.
+   */
+  public void bufferSizeChanged(int bufferSize);
+  
   public void latenciesChanged(int inputLatency, int outputLatency);
 
   /**
    * The next block of samples is ready. Input buffers are filled with new input,
    * and output buffers should be filled at the end of this method.
+   * @param sampleTime  System time related to sample position, in nanoseconds.
+   * @param samplePosition  Sample position since <code>start()</code> was called.
    * @param activeChannels  The set of channels which are active and have allocated buffers.
    */
-  public void bufferSwitch(Set<AsioChannelInfo> activeChannels);
+  public void bufferSwitch(long sampleTime, long samplePosition, Set<AsioChannelInfo> activeChannels);
 }

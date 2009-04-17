@@ -3,12 +3,12 @@
  * 
  *  This file is part of JAsioHost.
  *
- *  JVstHost is free software: you can redistribute it and/or modify
+ *  JAsioHost is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  JVstHost is distributed in the hope that it will be useful,
+ *  JAsioHost is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU Lesser General Public License for more details.
@@ -27,7 +27,7 @@ public class AsioChannelInfo {
 
   private final int index;
   private final boolean isInput;
-  private final boolean isActive;
+  private volatile boolean isActive;
   private final int channelGroup;
   private final AsioSampleType sampleType;
   private final String name;
@@ -85,6 +85,7 @@ public class AsioChannelInfo {
   protected void setByteBuffers(ByteBuffer buffer0, ByteBuffer buffer1) {
     if (buffer0 == null || buffer1 == null) {
       // the ByteBuffer references are cleared
+      isActive = false;
       nativeBuffers[0] = null;
       nativeBuffers[1] = null;
     } else {
@@ -96,7 +97,8 @@ public class AsioChannelInfo {
         buffer1.order(ByteOrder.LITTLE_ENDIAN);
       }
       nativeBuffers[0] = isInput ? buffer0.asReadOnlyBuffer() : buffer0;
-      nativeBuffers[1] = isInput ? buffer1.asReadOnlyBuffer() : buffer1;      
+      nativeBuffers[1] = isInput ? buffer1.asReadOnlyBuffer() : buffer1;
+      isActive = true;
     }
   }
 
@@ -121,6 +123,10 @@ public class AsioChannelInfo {
     return isInput ? index : ~index + 1; // : 2's complement
   }
   
+  /**
+   * Returns a string description of the channel in the format, 
+   * "Output Channel 0: Analog Out 1/2 Delta-AP [1], ASIOSTInt32LSB, group 0, inactive"
+   */
   @Override
   public String toString() {
 	StringBuilder sb = new StringBuilder();
