@@ -37,7 +37,7 @@ import java.util.Set;
  */
 public class AsioDriver {
   
-  protected AsioDriverState state;
+  private volatile AsioDriverState state;
   private final List<AsioDriverListener> listeners;
   private Set<AsioChannelInfo> activeChannels;
   private final AsioChannelInfo[] inputChannels;
@@ -49,11 +49,11 @@ public class AsioDriver {
     listeners = new ArrayList<AsioDriverListener>();
     driverInfo = init(); // initialise the driver
     
-    inputChannels = new AsioChannelInfo[getNumChannelsInput()];
+    inputChannels = new AsioChannelInfo[ASIOGetChannels(true)];
     for (int i = 0; i < inputChannels.length; i++) {
       inputChannels[i] = ASIOGetChannelInfo(i, true);
     }
-    outputChannels = new AsioChannelInfo[getNumChannelsOutput()];
+    outputChannels = new AsioChannelInfo[ASIOGetChannels(false)];
     for (int i = 0; i < outputChannels.length; i++) {
       outputChannels[i] = ASIOGetChannelInfo(i, false);
     }
@@ -82,28 +82,28 @@ public class AsioDriver {
   /**
    * Returns the name of the driver.
    */
-  public synchronized String getDriverName() {
+  public String getDriverName() {
     return driverInfo.getDriverName();
   }
   
   /**
    * Returns the version of the driver.
    */
-  public synchronized int getDriverVersion() {
+  public int getDriverVersion() {
     return driverInfo.getDriverVersion();
   }
   
   /**
    * Returns the version of ASIO which this driver uses (currently 1 or 2).
    */
-  public synchronized int getAsioVersion() {
+  public int getAsioVersion() {
     return driverInfo.getAsioVersion();
   }
   
   /**
    * Returns the current state of the ASIO driver.
    */
-  public synchronized AsioDriverState getState() {
+  public AsioDriverState getState() {
     return state;
   }
   
@@ -151,24 +151,24 @@ public class AsioDriver {
    * Returns the number of available input channels. -1 is returned if there is an error.
    * @return  The number of available input channels.
    */
-  public synchronized int getNumChannelsInput() {
+  public int getNumChannelsInput() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
-    return ASIOGetChannels(true);
+    return inputChannels.length;
   }
   
   /**
    * Returns the number of available output channels. -1 is return if there is an error.
    * @return  The number of available output channels.
    */
-  public synchronized int getNumChannelsOutput() {
+  public int getNumChannelsOutput() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
-    return ASIOGetChannels(false);
+    return outputChannels.length;
   }
-  public static native int ASIOGetChannels(boolean isInput);
+  private static native int ASIOGetChannels(boolean isInput);
 
   /**
    * Returns the current sample rate to which the host is set.
@@ -195,6 +195,9 @@ public class AsioDriver {
   }
   private static native boolean ASIOCanSampleRate(double sampleRate);
   
+  /**
+   * Returns the minimum supported buffer size.
+   */
   public synchronized int getBufferMinSize() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
@@ -202,6 +205,9 @@ public class AsioDriver {
     return ASIOGetBufferSize(0);
   }
   
+  /**
+   * Returns the maximum supported buffer size.
+   */
   public synchronized int getBufferMaxSize() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
@@ -209,6 +215,9 @@ public class AsioDriver {
     return ASIOGetBufferSize(1);
   }
   
+  /**
+   * Returns the preferred buffer size. The host should attempt to use this buffer size.
+   */
   public synchronized int getBufferPreferredSize() {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
@@ -250,7 +259,6 @@ public class AsioDriver {
     }
     return ASIOGetLatencies(false);
   }
-  
   private static native int ASIOGetLatencies(boolean isInput);
   
   /**
@@ -260,13 +268,13 @@ public class AsioDriver {
    * @throws IndexOutOfBoundsException  Thrown if the requested channel index is out of bounds. The
    * channel does not exist.
    */
-  public synchronized AsioChannelInfo getChannelInfoInput(int index) {
+  public AsioChannelInfo getChannelInfoInput(int index) {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
-    if (index < 0 || index >= getNumChannelsInput()) {
+    if (index < 0 || index >= inputChannels.length) {
       throw new IndexOutOfBoundsException("The input index must be in [0," + 
-          Integer.toString(getNumChannelsInput()) + "): " + Integer.toString(index));
+          Integer.toString(inputChannels.length) + "): " + Integer.toString(index));
     }
     return inputChannels[index];
   }
@@ -278,13 +286,13 @@ public class AsioDriver {
    * @throws IndexOutOfBoundsException  Thrown if the requested channel index is out of bounds. The
    * channel does not exist.
    */
-  public synchronized AsioChannelInfo getChannelInfoOutput(int index) {
+  public AsioChannelInfo getChannelInfoOutput(int index) {
     if (!state.atLeastInState(AsioDriverState.INITIALIZED)) {
       throw new IllegalStateException();
     }
-    if (index < 0 || index >= getNumChannelsOutput()) {
+    if (index < 0 || index >= outputChannels.length) {
       throw new IndexOutOfBoundsException("The output index must be in [0," + 
-          Integer.toString(getNumChannelsOutput()) + "): " + Integer.toString(index));
+          Integer.toString(outputChannels.length) + "): " + Integer.toString(index));
     }
     return outputChannels[index];
   }
@@ -337,7 +345,8 @@ public class AsioDriver {
   private static native void ASIODisposeBuffers();
   
   /**
-   * 
+   * Start the driver. Input buffers are presented and output buffers consumed via calls to 
+   * <code>bufferSwitch()</code>. Puts the <code>AsioDriver</code> into the <code>RUNNING</code> state.
    */
   public synchronized void start() {
     if (!AsioDriverState.PREPARED.equals(state)) {
@@ -349,7 +358,8 @@ public class AsioDriver {
   private static native void ASIOStart();
   
   /**
-   * 
+   * Stop the driver. Calls to <code>bufferSwitch()</code> will cease. The <code>AsioDriver</code> 
+   * returns to the <code>PREPARED</code> state.
    */
   public synchronized void stop() {
     if (!AsioDriverState.RUNNING.equals(state)) {
@@ -393,25 +403,35 @@ public class AsioDriver {
   
   /**
    * Add a new <code>AsioDriverListener</code>. Listeners can only be updated while the driver
-   * is in the LOADED or INITIALISED state.
+   * is in the LOADED or INITIALIZED state.
    * @param listener
    */
-  public synchronized void addAsioDriverListener(AsioDriverListener listener) {
+  public void addAsioDriverListener(AsioDriverListener listener) {
     if (state.ordinal() < AsioDriverState.PREPARED.ordinal()) {
-      if (!listeners.contains(listener)) {
-        listeners.add(listener);
+      synchronized(listeners) {
+        if (!listeners.contains(listener)) {
+          listeners.add(listener);
+        }        
       }
+    } else {
+      throw new IllegalStateException("AsioDriverListeners can only be updated while the " +
+      		"AsioDriver is in the LOADED or INITIALIZED state.");
     }
   }
   
   /**
    * Unregister an <code>AsioDriverListener</code>. Listeners can only be updated while the driver
-   * is in the LOADED or INITIALISED state.
+   * is in the LOADED or INITIALIZED state.
    * @param listener
    */
-  public synchronized void removeAsioDriverListener(AsioDriverListener listener) {
+  public void removeAsioDriverListener(AsioDriverListener listener) {
     if (state.ordinal() < AsioDriverState.PREPARED.ordinal()) {
-      listeners.remove(listener);        
+      synchronized(listeners) {
+        listeners.remove(listener);
+      }
+    } else {
+      throw new IllegalStateException("AsioDriverListeners can only be updated while the " +
+      		"AsioDriver is in the LOADED or INITIALIZED state.");
     }
   }
   
