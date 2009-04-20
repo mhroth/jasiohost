@@ -262,7 +262,9 @@ public class AsioDriver {
   private static native int ASIOGetLatencies(boolean isInput);
   
   /**
-   * Get information about an input channel.
+   * Get information about an input channel. The returned <code>AsioChannelInfo</code> object
+   * is persistent for as long as the driver is <code>INITIALIZED</code>, and can be retrieved
+   * in any context.
    * @param index  The input channel index to get information about.
    * @return An <code>AsioChannelInfo</code> object representing the requested input channel.
    * @throws IndexOutOfBoundsException  Thrown if the requested channel index is out of bounds. The
@@ -280,7 +282,9 @@ public class AsioDriver {
   }
   
   /**
-   * Get information about an output channel.
+   * Get information about an output channel. The returned <code>AsioChannelInfo</code> object
+   * is persistent for as long as the driver is <code>INITIALIZED</code>, and can be retrieved
+   * in any context.
    * @param index  The output channel index to get information about.
    * @return An <code>AsioChannelInfo</code> object representing the requested output channel.
    * @throws IndexOutOfBoundsException  Thrown if the requested channel index is out of bounds. The
