@@ -89,15 +89,15 @@ public class AsioChannelInfo {
       nativeBuffers[0] = null;
       nativeBuffers[1] = null;
     } else {
-      if (sampleType.toString().contains("MSB")) {
-        buffer0.order(ByteOrder.BIG_ENDIAN); // set the endian-ness of the buffers
-        buffer1.order(ByteOrder.BIG_ENDIAN); // according to the sample type      
-      } else {
-        buffer0.order(ByteOrder.LITTLE_ENDIAN);
-        buffer1.order(ByteOrder.LITTLE_ENDIAN);
-      }
       nativeBuffers[0] = isInput ? buffer0.asReadOnlyBuffer() : buffer0;
       nativeBuffers[1] = isInput ? buffer1.asReadOnlyBuffer() : buffer1;
+      if (sampleType.name().contains("MSB")) {
+        nativeBuffers[0].order(ByteOrder.BIG_ENDIAN); // set the endian-ness of the buffers
+        nativeBuffers[1].order(ByteOrder.BIG_ENDIAN); // according to the sample type      
+      } else {
+        nativeBuffers[0].order(ByteOrder.LITTLE_ENDIAN);
+        nativeBuffers[1].order(ByteOrder.LITTLE_ENDIAN);
+      }
       isActive = true;
     }
   }
