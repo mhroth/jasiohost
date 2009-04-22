@@ -34,6 +34,12 @@ public class AsioChannelInfo {
   private final ByteBuffer[] nativeBuffers;
   private volatile int bufferIndex;
   
+  private static final float MAX_INT16 = (float) 0x00007FFF;
+  private static final float MAX_INT18 = (float) 0x0001FFFF;
+  private static final float MAX_INT20 = (float) 0x0007FFFF;
+  private static final float MAX_INT24 = (float) 0x007FFFFF;
+  private static final float MAX_INT32 = (float) 0x7FFFFFFF; // Integer.MAX_VALUE
+  
   private AsioChannelInfo(int index, boolean isInput, boolean isActive, int channelGroup, AsioSampleType sampleType, String name) {
     this.index = index;
     this.isInput = isInput;
@@ -99,6 +105,173 @@ public class AsioChannelInfo {
         nativeBuffers[1].order(ByteOrder.LITTLE_ENDIAN);
       }
       isActive = true;
+    }
+  }
+  
+  /**
+   * A convenience method to write a <code>float</code> array of samples to the output. The array 
+   * values are expected to be bounded to the range of [-1,1]. The need to convert to the correct 
+   * sample type is abstracted.
+   * @param output  A <code>float</code> array to write to the output.
+   */
+  public void write(float[] output) {
+    if (isInput) {
+      throw new IllegalStateException("Only output channels can be written to.");
+    }
+    if (!isActive) {
+      throw new IllegalStateException("This channel is not active.");
+    }
+    ByteBuffer outputBuffer = getByteBuffer();
+    if (outputBuffer.limit() >> 2 != output.length) {
+      throw new IllegalArgumentException("The argument array must have a length of " + Integer.toString(outputBuffer.limit() >> 2));
+    }
+    for (int i = 0; i < output.length; i++) {
+      switch (sampleType) {
+        case ASIOSTFloat64MSB:
+        case ASIOSTFloat64LSB: {
+          outputBuffer.putDouble((double) output[i]);
+          break;
+        }
+        case ASIOSTFloat32MSB:
+        case ASIOSTFloat32LSB: {
+          outputBuffer.putFloat(output[i]);
+          break;
+        }
+        case ASIOSTInt32MSB:
+        case ASIOSTInt32LSB: {
+          outputBuffer.putInt((int) (output[i] * MAX_INT32));
+          break;
+        }
+        case ASIOSTInt32MSB16:
+        case ASIOSTInt32LSB16: {
+          outputBuffer.putInt((int) (output[i] * MAX_INT16));
+          break;
+        }
+        case ASIOSTInt32MSB18:
+        case ASIOSTInt32LSB18: {
+          outputBuffer.putInt((int) (output[i] * MAX_INT18));
+          break;
+        }
+        case ASIOSTInt32MSB20:
+        case ASIOSTInt32LSB20: {
+          outputBuffer.putInt((int) (output[i] * MAX_INT20));
+          break;
+        }
+        case ASIOSTInt32MSB24:
+        case ASIOSTInt32LSB24: {
+          outputBuffer.putInt((int) (output[i] * MAX_INT24));
+          break;
+        }
+        case ASIOSTInt16MSB:
+        case ASIOSTInt16LSB: {
+          outputBuffer.putShort((short) (output[i] * MAX_INT16));
+          break;
+        }
+        case ASIOSTInt24MSB: {
+          // bytes have no endian-ness, and must therefore be placed manually
+          int sampleValueInt = (int) (output[i] * MAX_INT24);
+          outputBuffer.put((byte) ((sampleValueInt >> 16) & 0xFF));
+          outputBuffer.put((byte) ((sampleValueInt >> 8) & 0xFF));
+          outputBuffer.put((byte) (sampleValueInt & 0xFF));
+          break;
+        }
+        case ASIOSTInt24LSB: {
+          int sampleValueInt = (int) (output[i] * MAX_INT24);
+          outputBuffer.put((byte) (sampleValueInt & 0xFF));
+          outputBuffer.put((byte) ((sampleValueInt >> 8) & 0xFF));
+          outputBuffer.put((byte) ((sampleValueInt >> 16) & 0xFF));
+          break;
+        }
+        case ASIOSTDSDInt8MSB1:
+        case ASIOSTDSDInt8LSB1:
+        case ASIOSTDSDInt8NER8: {
+          throw new IllegalStateException(
+              "The sample types ASIOSTDSDInt8MSB1, ASIOSTDSDInt8LSB1, and ASIOSTDSDInt8NER8 are not supported.");
+        }
+      }
+    }
+  }
+  
+  /**
+   * A convenience method to read samples from the input buffer to a <code>float</code> array. 
+   * The argument array must have the same length as the configured buffer size. The returned samples
+   * are bounded to within [-1,1].
+   * @param input  A <code>float</code> array to read into.
+   */
+  public void read(float[] input) {
+    if (!isInput) {
+      throw new IllegalStateException("Only input channels can be read from.");
+    }
+    if (!isActive) {
+      throw new IllegalStateException("This channel is not active.");
+    }
+    ByteBuffer inputBuffer = getByteBuffer();
+    if (inputBuffer.limit() >> 2 != input.length) {
+      throw new IllegalArgumentException("The argument array must have a length of " + Integer.toString(inputBuffer.limit() >> 2));
+    }
+    for (int i = 0; i < input.length; i++) {
+      switch (sampleType) {
+        case ASIOSTFloat64MSB:
+        case ASIOSTFloat64LSB: {
+          input[i] = (float) inputBuffer.getDouble();
+          break;
+        }
+        case ASIOSTFloat32MSB:
+        case ASIOSTFloat32LSB: {
+          input[i] = inputBuffer.getFloat();
+          break;
+        }
+        case ASIOSTInt32MSB:
+        case ASIOSTInt32LSB: {
+          input[i] = ((float) inputBuffer.getInt()) / MAX_INT32;
+          break;
+        }
+        case ASIOSTInt32MSB16:
+        case ASIOSTInt32LSB16: {
+          input[i] = ((float) inputBuffer.getInt()) / MAX_INT16;
+          break;
+        }
+        case ASIOSTInt32MSB18:
+        case ASIOSTInt32LSB18: {
+          input[i] = ((float) inputBuffer.getInt()) / MAX_INT18;
+          break;
+        }
+        case ASIOSTInt32MSB20:
+        case ASIOSTInt32LSB20: {
+          input[i] = ((float) inputBuffer.getInt()) / MAX_INT20;
+          break;
+        }
+        case ASIOSTInt32MSB24:
+        case ASIOSTInt32LSB24: {
+          input[i] = ((float) inputBuffer.getInt()) / MAX_INT24;
+          break;
+        }
+        case ASIOSTInt16MSB:
+        case ASIOSTInt16LSB: {
+          input[i] = ((float) inputBuffer.getShort()) / MAX_INT16;
+          break;
+        }
+        case ASIOSTInt24MSB: {
+          int sampleValueInt = ((int) inputBuffer.get()) & 0xFF; sampleValueInt <<= 8;
+          sampleValueInt |= ((int) inputBuffer.get()) & 0xFF; sampleValueInt <<= 8;
+          sampleValueInt |= ((int) inputBuffer.get()) & 0xFF;
+          input[i] = ((float) sampleValueInt) / MAX_INT24;
+          break;
+        }
+        case ASIOSTInt24LSB: {
+          int sampleValueInt = ((int) inputBuffer.get()) & 0xFF;
+          sampleValueInt |= (((int) inputBuffer.get()) & 0xFF) << 8;
+          sampleValueInt |= (((int) inputBuffer.get()) & 0xFF) << 16;
+          input[i] = ((float) sampleValueInt) / MAX_INT24;
+          break;
+        }
+        case ASIOSTDSDInt8MSB1:
+        case ASIOSTDSDInt8LSB1:
+        case ASIOSTDSDInt8NER8: {
+          throw new IllegalStateException(
+              "The sample types ASIOSTDSDInt8MSB1, ASIOSTDSDInt8LSB1, and ASIOSTDSDInt8NER8 are not supported.");
+        }
+      }
     }
   }
 
