@@ -20,6 +20,10 @@
 
 package com.synthbot.jasiohost;
 
+/**
+ * This is a protected class meant only to encapsulate the returned values from 
+ * <code>AsioDriver.ASIOInit()</code>.
+ */
 public class AsioDriverInfo {
 
 	private final int asioVersion;

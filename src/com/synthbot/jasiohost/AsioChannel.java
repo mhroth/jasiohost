@@ -23,6 +23,12 @@ package com.synthbot.jasiohost;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * The <code>AsioChannel</code> class represents an input or output channel available form the
+ * ASIO driver. It provides information such as current state and sample type. This class also
+ * encapsulates and makes available native audio buffers if it is active. Convenience methods
+ * are also available to facilitate consuming audio.
+ */
 public class AsioChannel {
 
   private final int index;

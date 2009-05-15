@@ -28,7 +28,7 @@ public class AsioException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
   
-  public AsioException(String message) {
+  protected AsioException(String message) {
     super(message);
   }
 	
