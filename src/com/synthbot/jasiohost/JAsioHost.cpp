@@ -30,7 +30,6 @@
 
 // external reference
 extern AsioDrivers* asioDrivers;
-bool loadAsioDriver(char *name);
 
 // global variables
 JavaVM *jvm;
