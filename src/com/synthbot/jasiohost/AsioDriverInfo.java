@@ -27,7 +27,7 @@ public class AsioDriverInfo {
 	private final String driverName;
 	private final String errorMessage;
 	
-	public AsioDriverInfo(int asioVersion, int driverVersion, String driverName, String errorMessage) {
+	protected AsioDriverInfo(int asioVersion, int driverVersion, String driverName, String errorMessage) {
 		this.asioVersion = asioVersion;
 		this.driverVersion = driverVersion;
 		this.driverName = driverName;
