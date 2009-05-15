@@ -9,6 +9,22 @@ extern "C" {
 #endif
 /*
  * Class:     com_synthbot_jasiohost_AsioDriver
+ * Method:    registerThread
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_registerThread
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_synthbot_jasiohost_AsioDriver
+ * Method:    getDriverNames
+ * Signature: ([Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_AsioDriver_getDriverNames
+  (JNIEnv *, jclass, jobjectArray);
+
+/*
+ * Class:     com_synthbot_jasiohost_AsioDriver
  * Method:    ASIOInit
  * Signature: ()Lcom/synthbot/jasiohost/AsioDriverInfo;
  */
@@ -74,7 +90,7 @@ JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetLatencies
 /*
  * Class:     com_synthbot_jasiohost_AsioDriver
  * Method:    ASIOGetChannelInfo
- * Signature: (IZ)Lcom/synthbot/jasiohost/AsioChannelInfo;
+ * Signature: (IZ)Lcom/synthbot/jasiohost/AsioChannel;
  */
 JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetChannelInfo
   (JNIEnv *, jclass, jint, jboolean);
@@ -82,7 +98,7 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetChannelI
 /*
  * Class:     com_synthbot_jasiohost_AsioDriver
  * Method:    ASIOCreateBuffers
- * Signature: ([Lcom/synthbot/jasiohost/AsioChannelInfo;I)V
+ * Signature: ([Lcom/synthbot/jasiohost/AsioChannel;I)V
  */
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
   (JNIEnv *, jclass, jobjectArray, jint);
@@ -109,6 +125,22 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOStart
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOStop
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_synthbot_jasiohost_AsioDriver
+ * Method:    loadDriver
+ * Signature: (Ljava/lang/String;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_synthbot_jasiohost_AsioDriver_loadDriver
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     com_synthbot_jasiohost_AsioDriver
+ * Method:    removeCurrentDriver
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_removeCurrentDriver
   (JNIEnv *, jclass);
 
 #ifdef __cplusplus

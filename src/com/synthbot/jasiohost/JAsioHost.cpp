@@ -24,7 +24,6 @@
 #include "asio.h"
 #include "asiodrivers.h"
 #include "iasiothiscallresolver.h"
-#include "com_synthbot_jasiohost_JAsioHost.h"
 #include "com_synthbot_jasiohost_AsioDriver.h"
 
 #define JNI_VERSION JNI_VERSION_1_4
@@ -36,10 +35,12 @@ bool loadAsioDriver(char *name);
 // global variables
 JavaVM *jvm;
 jobject jAsioDriver; // a strong global reference to the AsioDriver Java object for use in callbacks
-jmethodID fireBufferSwitchMid;
+jmethodID fireBufferSwitchMid; // a reference to the fireBufferSwitch method id for use during callbacks
+                               // This MID is cached and not others because this one is used very often
+                               // and in a time-critical loop
 typedef struct BufferVars {
   ASIOBufferInfo *bufferInfos;
-  int numInitedChannels; // length of bufferInfos and sampleTypes arrays
+  int numInitedChannels; // length of bufferInfos array
   int bufferSize;
   ASIOCallbacks *callbacks;
   long samplePosition;
@@ -55,6 +56,8 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *localJvm, void *reserved) {
   fireBufferSwitchMid = env->GetMethodID(
       env->FindClass("com/synthbot/jasiohost/AsioDriver"), 
       "fireBufferSwitch", "(JJI)V");
+  jAsioDriver = NULL;
+  
   return JNI_VERSION;
 }
 
@@ -65,9 +68,9 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved) {
 }
 
 #if NATIVE_INT64
-	#define ASIO64toLong(a)  (a)
+  #define ASIO64toLong(a)  (a)
 #else
-	#define ASIO64toLong(a)  (((unsigned long long int) a.hi) << 32) | (unsigned long long int) a.lo
+  #define ASIO64toLong(a)  (((unsigned long long int) a.hi) << 32) | (unsigned long long int) a.lo
 #endif
 
 
@@ -205,11 +208,17 @@ long asioMessage(long selector, long value, void* message, double* opt) {
  * JAsioHost
  */
 
-JNIEXPORT jboolean JNICALL Java_com_synthbot_jasiohost_JAsioHost_loadDriver
+JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_registerThread
+(JNIEnv *env, jclass clazz) {
+
+  CoInitialize(NULL);
+}
+
+JNIEXPORT jboolean JNICALL Java_com_synthbot_jasiohost_AsioDriver_loadDriver
 (JNIEnv *env, jclass clazz, jstring jdriverName) {
 
   char *driverName = (char *) env->GetStringUTFChars(jdriverName, NULL);
-  bool isLoaded = loadAsioDriver(driverName);
+  bool isLoaded = asioDrivers->loadDriver(driverName);
   env->ReleaseStringUTFChars(jdriverName, driverName);
   return isLoaded ? JNI_TRUE : JNI_FALSE;
 }
@@ -243,16 +252,17 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOExit
 (JNIEnv *env, jobject jobj) {
 
   env->DeleteGlobalRef(jAsioDriver);
+  jAsioDriver = NULL;
   ASIOExit();
 }
 
-JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_JAsioHost_removeCurrentDriver
+JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_removeCurrentDriver
 (JNIEnv *env, jclass clazz) {
 
   asioDrivers->removeCurrentDriver();
 }
 
-JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_JAsioHost_getDriverNames
+JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_AsioDriver_getDriverNames
 (JNIEnv *env, jclass clazz, jobjectArray jdriverNames) {
 
   long maxNames = (long) env->GetArrayLength(jdriverNames);
@@ -274,13 +284,20 @@ JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_JAsioHost_getDriverNames
   return (jint) numNames;
 }
 
-JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_JAsioHost_getCurrentDriverIndex
+/**
+ * Deprecated in Java
+ *
+JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_AsioDriver_getCurrentDriverIndex
 (JNIEnv *env, jclass clazz) {
 
   return (jint) asioDrivers->getCurrentDriverIndex();
 }
+ */
 
-JNIEXPORT jstring JNICALL Java_com_synthbot_jasiohost_JAsioHost_getCurrentDriverName
+/**
+ * Deprecated in Java
+ *
+JNIEXPORT jstring JNICALL Java_com_synthbot_jasiohost_AsioDriver_getCurrentDriverName
 (JNIEnv *env, jclass clazz) {
 
   char *name = (char *) malloc(sizeof(char) * 32);
@@ -289,6 +306,7 @@ JNIEXPORT jstring JNICALL Java_com_synthbot_jasiohost_JAsioHost_getCurrentDriver
   free(name);
   return jname;
 }
+ */
 
 
 /*
@@ -413,8 +431,8 @@ JNIEXPORT jobject JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetChannelI
   switch (errorCode) {
     case ASE_OK: {
       return env->NewObject(
-          env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"),
-          env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), "<init>", "(IZZILcom/synthbot/jasiohost/AsioSampleType;Ljava/lang/String;)V"),
+          env->FindClass("com/synthbot/jasiohost/AsioChannel"),
+          env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannel"), "<init>", "(IZZILcom/synthbot/jasiohost/AsioSampleType;Ljava/lang/String;)V"),
           (jint) index,
           isInput,
           (channelInfo.isActive == ASIOTrue) ? JNI_TRUE : JNI_FALSE,
@@ -449,14 +467,14 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
   for (int i = 0; i < bufferVars.numInitedChannels; i++) {
     jobject channelInfo = env->GetObjectArrayElement(channelsToInit, (jsize) i);
     jboolean jIsInput = env->CallBooleanMethod(channelInfo,
-                                               env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), "isInput", "()Z"));
+                                               env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannel"), "isInput", "()Z"));
     bufferVars.bufferInfos[i].isInput = (jIsInput == JNI_TRUE) ? ASIOTrue : ASIOFalse;
     jint channelNum = env->CallIntMethod(channelInfo,
-                                         env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), "getChannelIndex", "()I"));
+                                         env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannel"), "getChannelIndex", "()I"));
     bufferVars.bufferInfos[i].channelNum = (long) channelNum;
     sampleTypes[i] = env->GetIntField(env->CallObjectMethod(
                                           channelInfo,
-                                          env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), "getSampleType", "()Lcom/synthbot/jasiohost/AsioSampleType;")),
+                                          env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioChannel"), "getSampleType", "()Lcom/synthbot/jasiohost/AsioSampleType;")),
                                       env->GetFieldID(env->FindClass("com/synthbot/jasiohost/AsioSampleType"), "nativeEnum", "I"));    
   }
   
@@ -554,7 +572,7 @@ JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCreateBuffers
         env->CallVoidMethod(
             env->GetObjectArrayElement(channelsToInit, (jsize) i),
             env->GetMethodID(
-                env->FindClass("com/synthbot/jasiohost/AsioChannelInfo"), 
+                env->FindClass("com/synthbot/jasiohost/AsioChannel"), 
                 "setByteBuffers", "(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V"),
             byteBuffer0,
             byteBuffer1);

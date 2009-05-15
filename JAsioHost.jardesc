@@ -19,13 +19,11 @@
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioSampleType.java"/>
         <file path="/JAsioHost/src/com/synthbot/jasiohost/buildJah_win.sh"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriverListener.java"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{JAsioHost.java"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioException.java"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{ExampleHost.java"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriver.java"/>
         <file path="/JAsioHost/COPYING"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioChannelInfo.java"/>
-        <file path="/JAsioHost/src/com/synthbot/jasiohost/com_synthbot_jasiohost_JAsioHost.h"/>
+        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioChannel.java"/>
         <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriverInfo.java"/>
         <file path="/JAsioHost/src/com/synthbot/jasiohost/com_synthbot_jasiohost_AsioDriver.h"/>
     </selectedElements>

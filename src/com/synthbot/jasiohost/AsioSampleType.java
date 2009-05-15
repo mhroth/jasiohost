@@ -25,9 +25,8 @@ package com.synthbot.jasiohost;
  * The API makes a distinction between Big-Endian (denoted by <code>MSB</code>) and 
  * Little-Endian (<code>LSB</code>) encodings, which are meaningless in Java, as all 
  * numbers are Big-Endian encoded. <code>AsioSampleType</code>s are exposed for informative 
- * purposes, however they are most useful for determining the Java native type to use 
- * (<code>getJavaNativeType()</code>, and the number of bits per sample. The endianness of 
- * the sample is resolved in the native library.
+ * purposes, however they are most useful for determining the Java native type to use. 
+ * The endianness of the sample is resolved in the native library.
  */
 public enum AsioSampleType {
   

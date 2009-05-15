@@ -23,7 +23,7 @@ package com.synthbot.jasiohost;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class AsioChannelInfo {
+public class AsioChannel {
 
   private final int index;
   private final boolean isInput;
@@ -40,7 +40,7 @@ public class AsioChannelInfo {
   private static final float MAX_INT24 = (float) 0x007FFFFF;
   private static final float MAX_INT32 = (float) 0x7FFFFFFF; // Integer.MAX_VALUE
   
-  private AsioChannelInfo(int index, boolean isInput, boolean isActive, int channelGroup, AsioSampleType sampleType, String name) {
+  private AsioChannel(int index, boolean isInput, boolean isActive, int channelGroup, AsioSampleType sampleType, String name) {
     this.index = index;
     this.isInput = isInput;
     this.isActive = isActive;
@@ -114,6 +114,9 @@ public class AsioChannelInfo {
    * sample type is abstracted. The <code>output</code> array should be same size as the buffer.
    * If it is larger, then a <code>BufferOverflowException</code> will be thrown. If it is smaller,
    * the buffer will be incompletely filled.
+   * 
+   * If the ASIO host does not use <code>float</code>s to represent samples, then the <code>AsioChannel</code>'s
+   * <code>ByteBuffer</code> should be directly manipulated. Use <code>getByteBuffer</code> to access the buffer.
    * @param output  A <code>float</code> array to write to the output.
    */
   public void write(float[] output) {
@@ -313,10 +316,10 @@ public class AsioChannelInfo {
    */
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof AsioChannelInfo)) {
+    if (!(o instanceof AsioChannel)) {
       return false;
     } else {
-      AsioChannelInfo channelInfo = (AsioChannelInfo) o;
+      AsioChannel channelInfo = (AsioChannel) o;
       return (channelInfo.getChannelIndex() == index && channelInfo.isInput() == isInput);
     }
   }

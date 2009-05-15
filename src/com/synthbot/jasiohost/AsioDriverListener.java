@@ -36,13 +36,13 @@ public interface AsioDriverListener {
    *   new Thread() {
    *     @Override
    *     public void run() {
-   * 	   JAsioHost.getCurrentDriver().returnToState(AsioDriverState.INITIALIZED);
+   * 	     AsioDriver.getDriver().returnToState(AsioDriverState.INITIALIZED);
    *     }
    *   }.start();
    * }
    * </code></pre>
    * Because all methods are synchronized, this approach will safely return the driver
-   * to the INITIALIZED state as soon as possible. The buffers must then be recreated
+   * to the <code>INITIALIZED</code> state as soon as possible. The buffers must then be recreated
    * and the driver restarted.
    */
   public void resetRequest();
@@ -51,8 +51,9 @@ public interface AsioDriverListener {
   
   /**
    * The driver has a new preferred buffer size. The host should make an effort to
-   * accomodate the driver.
-   * @param preferredBufferSize  The new preferred buffer size.
+   * accommodate the driver by returning to the <code>INITIALIZED</code> state and calling 
+   * <code>AsioDriver.createBuffers()</code>.
+   * @param bufferSize  The new preferred buffer size.
    */
   public void bufferSizeChanged(int bufferSize);
   
@@ -65,5 +66,5 @@ public interface AsioDriverListener {
    * @param samplePosition  Sample position since <code>start()</code> was called.
    * @param activeChannels  The set of channels which are active and have allocated buffers.
    */
-  public void bufferSwitch(long sampleTime, long samplePosition, Set<AsioChannelInfo> activeChannels);
+  public void bufferSwitch(long sampleTime, long samplePosition, Set<AsioChannel> activeChannels);
 }
