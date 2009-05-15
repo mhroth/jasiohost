@@ -76,7 +76,6 @@ public class ExampleHost extends JFrame implements AsioDriverListener {
     });
     
     buttonStop.addActionListener(new ActionListener() {
-      @Override
       public void actionPerformed(ActionEvent event) {
         if (asioDriver != null) {
           asioDriver.shutdownAndUnloadDriver();
@@ -87,7 +86,6 @@ public class ExampleHost extends JFrame implements AsioDriverListener {
     });
 
     buttonControlPanel.addActionListener(new ActionListener() {
-      @Override
       public void actionPerformed(ActionEvent event) {
         if (asioDriver != null && 
             asioDriver.getCurrentState().ordinal() >= AsioDriverState.INITIALIZED.ordinal()) {
