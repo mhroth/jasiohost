@@ -20,12 +20,10 @@
 
 package com.synthbot.jasiohost;
 
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -114,20 +112,8 @@ public class ExampleHost extends JFrame implements AsioDriverListener {
     });
     
     this.setSize(240, 85);
+    this.setResizable(false);
     this.setVisible(true);
-    
-    // register the AWT thread with the AsioDriver object
-    try {
-      EventQueue.invokeAndWait(new Runnable() {
-        public void run() {
-          AsioDriver.registerThread();
-        }
-      });
-    } catch (InterruptedException ie) {
-      ie.printStackTrace(System.err);
-    } catch (InvocationTargetException ite) {
-      ite.printStackTrace(System.err);
-    }
   }
   
   public void bufferSwitch(long systemTime, long samplePosition, Set<AsioChannel> channels) {
