@@ -1,5 +1,5 @@
 /*
- *  Copyright 2009 Martin Roth (mhroth@gmail.com)
+ *  Copyright 2009,2010 Martin Roth (mhroth@gmail.com)
  * 
  *  This file is part of JAsioHost.
  *
@@ -344,13 +344,13 @@ JNIEXPORT jdouble JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetSampleRa
       env->ThrowNew(
           env->FindClass("com/synthbot/jasiohost/AsioException"),
           "Sample rate not present or unknown.");
-      return (jdouble) 0.0;
+      return (jdouble) -1.0;
     }
     case ASE_NotPresent: {
       env->ThrowNew(
           env->FindClass("com/synthbot/jasiohost/AsioException"),
           "No input or output is present.");
-      return (jdouble) -1;
+      return (jdouble) -1.0;
     }
   }
 }
@@ -360,6 +360,32 @@ JNIEXPORT jboolean JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCanSampleR
   
   ASIOError errorCode = ASIOCanSampleRate((ASIOSampleRate) sampleRate);
   return (errorCode == ASE_OK) ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOSetSampleRate
+(JNIEnv *env, jclass clazz, jdouble sampleRate) {
+  
+  ASIOError errorCode = ASIOSetSampleRate((ASIOSampleRate) sampleRate);
+  switch (errorCode) {
+    case ASE_OK: {
+      return;
+    }
+    case ASE_NoClock: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "Sample rate not present or unknown.");
+    }
+    case ASE_InvalidMode: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "The current clock is external and the given sample rate is non-zero.");
+    }
+    case ASE_NotPresent: {
+      env->ThrowNew(
+          env->FindClass("com/synthbot/jasiohost/AsioException"),
+          "No input or output is present.");
+    }
+  }
 }
 
 JNIEXPORT jint JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOGetBufferSize

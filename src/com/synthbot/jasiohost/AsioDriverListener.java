@@ -22,8 +22,16 @@ package com.synthbot.jasiohost;
 
 import java.util.Set;
 
+/**
+ * This interface defines the callbacks that an ASIO driver may make to the host.
+ */
 public interface AsioDriverListener {
 
+  /**
+   * The sample rate has changed. This may be due to a user initiated change, or a change in input/output
+   * source.
+   * @param sampleRate  The new sample rate.
+   */
   public void sampleRateDidChange(double sampleRate);
 
   /**
@@ -47,6 +55,9 @@ public interface AsioDriverListener {
    */
   public void resetRequest();
   
+  /**
+   * The driver detected audio buffer underruns and requires a resynchronization.
+   */
   public void resyncRequest();
   
   /**
@@ -57,6 +68,11 @@ public interface AsioDriverListener {
    */
   public void bufferSizeChanged(int bufferSize);
   
+  /**
+   * The input or output latencies have changed. The host is updated with the new values.
+   * @param inputLatency  The new input latency in milliseconds.
+   * @param outputLatency  The new output latency in milliseconds.
+   */
   public void latenciesChanged(int inputLatency, int outputLatency);
 
   /**
@@ -64,7 +80,9 @@ public interface AsioDriverListener {
    * and output buffers should be filled at the end of this method.
    * @param sampleTime  System time related to sample position, in nanoseconds.
    * @param samplePosition  Sample position since <code>start()</code> was called.
-   * @param activeChannels  The set of channels which are active and have allocated buffers.
+   * @param activeChannels  The set of channels which are active and have allocated buffers. Retrieve
+   * the buffers with <code>AsioChannel.getBuffer()</code>, or use <code>AsioChannel.read()</code>
+   * and <code>AsioDriver.write()</code> in order to easily work with <code>float</code> arrays.
    */
   public void bufferSwitch(long sampleTime, long samplePosition, Set<AsioChannel> activeChannels);
 }

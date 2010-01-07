@@ -1,5 +1,5 @@
 /*
- *  Copyright 2009 Martin Roth (mhroth@gmail.com)
+ *  Copyright 2009,2010 Martin Roth (mhroth@gmail.com)
  * 
  *  This file is part of JAsioHost.
  *
@@ -276,7 +276,7 @@ public class AsioDriver {
 
   /**
    * Returns the current sample rate to which the host is set.
-   * @return  The current sample rate.
+   * @return  The current sample rate in Hz.
    */
   public synchronized double getSampleRate() {
     if (currentState.ordinal() < AsioDriverState.INITIALIZED.ordinal()) {
@@ -290,7 +290,7 @@ public class AsioDriver {
   
   /**
    * Inquires of the hardware if a specific available sample rate is available.
-   * @param sampleRate  The sample rate in question.
+   * @param sampleRate  The sample rate in Hz.
    * @return  True if the sample rate is supported. False otherwise.
    */
   public synchronized boolean canSampleRate(double sampleRate) {
@@ -302,6 +302,21 @@ public class AsioDriver {
     return ASIOCanSampleRate(sampleRate);
   }
   private static native boolean ASIOCanSampleRate(double sampleRate);
+  
+  /**
+   * Set the hardware to the requested sample Rate. If sampleRate == 0, enable external sync.
+   * The driver must be in the <code>INITIALIZED</code> state.
+   * @param sampleRate  The sample rate in Hz.
+   */
+  public synchronized void setSampleRate(double sampleRate) {
+    if (currentState.ordinal() != AsioDriverState.INITIALIZED.ordinal()) {
+      throw new IllegalStateException("The AsioDriver must be in the INITIALIZED state: " + 
+          currentState.toString());
+    }
+    registerThreadIfNecessary();
+    ASIOSetSampleRate(sampleRate);
+  }
+  private static native void ASIOSetSampleRate(double sampleRate);
   
   /**
    * Returns the minimum supported buffer size.
@@ -337,6 +352,11 @@ public class AsioDriver {
     return ASIOGetBufferSize(2);
   }
   
+  /**
+   * Returns the granularity at which buffer sizes may differ. Usually, the buffer size will be 
+   * a power of 2; in this case, granularity will be reported as -1, signaling possible 
+   * buffer sizes starting from the minimum size, increased in powers of 2 up to maximum size.
+   */
   public synchronized int getBufferGranularity() {
     if (currentState.ordinal() < AsioDriverState.INITIALIZED.ordinal()) {
       throw new IllegalStateException("The AsioDriver must be at least in the INITIALIZED state: " + 

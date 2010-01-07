@@ -1,5 +1,5 @@
 /*
- *  Copyright 2009 Martin Roth (mhroth@gmail.com)
+ *  Copyright 2009,2010 Martin Roth (mhroth@gmail.com)
  * 
  *  This file is part of JAsioHost.
  *
@@ -34,6 +34,13 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
+/**
+ * The <code>ExampleHost</code> demonstrates how to use an <code>AsioDriver</code> in order to read 
+ * and write audio from a loaded ASIO driver. A small GUI is presented, allowing the user to select
+ * any of the available ASIO drivers on the system. The <i>Start</i> button loads the driver and 
+ * plays a 440Hz tone. The <i>Stop</i> button stops this process and unloads the driver. The
+ * <i>Control Panel</i> button opens the driver's control panel for any additional configuration.
+ */
 public class ExampleHost extends JFrame implements AsioDriverListener {
   
   private static final long serialVersionUID = 1L;
@@ -126,11 +133,11 @@ public class ExampleHost extends JFrame implements AsioDriverListener {
   }
   
   public void bufferSizeChanged(int bufferSize) {
-    // TODO Auto-generated method stub
+    System.out.println("bufferSizeChanged() callback received.");
   }
 
   public void latenciesChanged(int inputLatency, int outputLatency) {
-    // TODO Auto-generated method stub
+    System.out.println("latenciesChanged() callback received.");
   }
 
   public void resetRequest() {
@@ -141,17 +148,18 @@ public class ExampleHost extends JFrame implements AsioDriverListener {
     new Thread() {
       @Override
       public void run() {
+        System.out.println("resetRequest() callback received. Returning driver to INITIALIZED state.");
         asioDriver.returnToState(AsioDriverState.INITIALIZED);
       }
     }.start();
   }
 
   public void resyncRequest() {
-    // TODO Auto-generated method stub
+    System.out.println("resyncRequest() callback received.");
   }
 
   public void sampleRateDidChange(double sampleRate) {
-    // TODO Auto-generated method stub
+    System.out.println("sampleRateDidChange() callback received.");
   }
   
   public static void main(String[] args) {

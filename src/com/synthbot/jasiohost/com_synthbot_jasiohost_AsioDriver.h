@@ -73,6 +73,14 @@ JNIEXPORT jboolean JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOCanSampleR
 
 /*
  * Class:     com_synthbot_jasiohost_AsioDriver
+ * Method:    ASIOSetSampleRate
+ * Signature: (D)V
+ */
+JNIEXPORT void JNICALL Java_com_synthbot_jasiohost_AsioDriver_ASIOSetSampleRate
+  (JNIEnv *, jclass, jdouble);
+
+/*
+ * Class:     com_synthbot_jasiohost_AsioDriver
  * Method:    ASIOGetBufferSize
  * Signature: (I)I
  */
