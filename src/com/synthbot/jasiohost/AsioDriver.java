@@ -148,7 +148,8 @@ public class AsioDriver {
   }
   
   static {
-    System.loadLibrary("jasiohost");
+    // load jasiohost32.dll or jasiohost64.dll depending on the the bit-depth of the JVM
+    System.loadLibrary("jasiohost" + System.getProperty("sun.arch.data.model"));  
     registeredThreads = new HashSet<Thread>();
   }
   
@@ -621,42 +622,36 @@ public class AsioDriver {
    * Callbacks
    */
   
-  @SuppressWarnings("unused")
   private void fireSampleRateDidChange(double sampleRate) {
     for (AsioDriverListener listener : listeners) {
       listener.sampleRateDidChange(sampleRate);
     }
   }
   
-  @SuppressWarnings("unused")
   private void fireResetRequest() {
     for (AsioDriverListener listener : listeners) {
       listener.resetRequest();
     }
   }
   
-  @SuppressWarnings("unused")
   private void fireResyncRequest() {
     for (AsioDriverListener listener : listeners) {
       listener.resyncRequest();
     }
   }
   
-  @SuppressWarnings("unused")
   private void fireBufferSizeChanged(int bufferSize) {
     for (AsioDriverListener listener : listeners) {
       listener.bufferSizeChanged(bufferSize);
     }
   }
   
-  @SuppressWarnings("unused")
   private void fireLatenciesChanged(int inputLatency, int outputLatency) {
     for (AsioDriverListener listener : listeners) {
       listener.latenciesChanged(inputLatency, outputLatency);
     }
   }
   
-  @SuppressWarnings("unused")
   private void fireBufferSwitch(long systemTime, long samplePosition, int bufferIndex) {
     for (AsioChannel channelInfo : activeChannels) {
       channelInfo.setBufferIndex(bufferIndex);

@@ -1,31 +1,23 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="WINDOWS-1252" standalone="no"?>
 <jardesc>
-    <jar path="JAsioHost/JAsioHost.jar"/>
-    <options buildIfNeeded="true" compress="true" descriptionLocation="/JAsioHost/JAsioHost.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="true" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <jar path="jasiohost/JAsioHost.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/jasiohost/JAsioHost.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="true" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
-    <manifest generateManifest="true" mainClassHandleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{ExampleHost.java[ExampleHost" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+    <manifest generateManifest="true" mainClassHandleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{ExampleHost.java[ExampleHost" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
         <sealing sealJar="true">
             <packagesToSeal/>
             <packagesToUnSeal/>
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
-        <file path="/JAsioHost/src/com/synthbot/jasiohost/iasiothiscallresolver.cpp"/>
-        <file path="/JAsioHost/src/com/synthbot/jasiohost/JAsioHost.cpp"/>
-        <file path="/JAsioHost/src/com/synthbot/jasiohost/iasiothiscallresolver.h"/>
-        <file path="/JAsioHost/COPYING.LESSER"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriverState.java"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioSampleType.java"/>
-        <file path="/JAsioHost/src/com/synthbot/jasiohost/buildJah_win.sh"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriverListener.java"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioException.java"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{ExampleHost.java"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriver.java"/>
-        <file path="/JAsioHost/COPYING"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioChannel.java"/>
-        <javaElement handleIdentifier="=JAsioHost/src&lt;com.synthbot.jasiohost{AsioDriverInfo.java"/>
-        <file path="/JAsioHost/src/com/synthbot/jasiohost/com_synthbot_jasiohost_AsioDriver.h"/>
+        <javaElement handleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{AsioDriver.java"/>
+        <javaElement handleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{AsioDriverInfo.java"/>
+        <javaElement handleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{AsioChannel.java"/>
+        <javaElement handleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{AsioDriverState.java"/>
+        <javaElement handleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{AsioSampleType.java"/>
+        <javaElement handleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{ExampleHost.java"/>
+        <javaElement handleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{AsioException.java"/>
+        <javaElement handleIdentifier="=jasiohost/src&lt;com.synthbot.jasiohost{AsioDriverListener.java"/>
     </selectedElements>
-    <fatjar builder="org.eclipse.jdt.ui.plain_jar_builder" launchConfig=""/>
 </jardesc>
