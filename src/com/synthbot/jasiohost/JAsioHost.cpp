@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <conio.h>
 #include "asiosys.h"
 #include "asio.h"
 #include "asiodrivers.h"
@@ -34,9 +35,15 @@ extern AsioDrivers* asioDrivers;
 // global variables
 JavaVM *jvm;
 jobject jAsioDriver; // a strong global reference to the AsioDriver Java object for use in callbacks
-jmethodID fireBufferSwitchMid; // a reference to the fireBufferSwitch method id for use during callbacks
-                               // This MID is cached and not others because this one is used very often
-                               // and in a time-critical loop
+
+// global references to the callback methods
+jmethodID fireBufferSwitchMid;
+jmethodID fireLatenciesChangedMid;
+jmethodID fireResetRequestMid;
+jmethodID fireSampleRateDidChangeMid;
+jmethodID fireResyncRequestMid;
+jmethodID fireBufferSizeChangedMid;
+
 typedef struct BufferVars {
   ASIOBufferInfo *bufferInfos;
   int numInitedChannels; // length of bufferInfos array
@@ -52,9 +59,27 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *localJvm, void *reserved) {
   
   JNIEnv *env = NULL;
   jvm->GetEnv((void **) &env, JNI_VERSION);
+  
+  // assign global references to callback methods
   fireBufferSwitchMid = env->GetMethodID(
       env->FindClass("com/synthbot/jasiohost/AsioDriver"), 
       "fireBufferSwitch", "(JJI)V");
+  fireLatenciesChangedMid = env->GetMethodID(
+      env->FindClass("com/synthbot/jasiohost/AsioDriver"), 
+      "fireLatenciesChanged", "(II)V");
+  fireResetRequestMid = env->GetMethodID(
+      env->FindClass("com/synthbot/jasiohost/AsioDriver"), 
+      "fireResetRequest", "()V");
+  fireSampleRateDidChangeMid = env->GetMethodID(
+      env->FindClass("com/synthbot/jasiohost/AsioDriver"),
+      "fireSampleRateDidChange", "(D)V");
+  fireResyncRequestMid = env->GetMethodID(
+      env->FindClass("com/synthbot/jasiohost/AsioDriver"),
+      "fireResyncRequest", "()V");
+  fireBufferSizeChangedMid = env->GetMethodID(
+      env->FindClass("com/synthbot/jasiohost/AsioDriver"),
+      "fireBufferSizeChanged", "(I)V");
+  	  
   jAsioDriver = NULL;
   
   return JNI_VERSION;
@@ -111,14 +136,12 @@ void sampleRateDidChange(ASIOSampleRate sampleRate) {
   if (res == JNI_OK && env != NULL) {
     env->CallVoidMethod(
         jAsioDriver,
-        env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireSampleRateDidChange", "(D)V"),
+        fireSampleRateDidChangeMid,
         (jdouble) sampleRate);
   }
 }
-
 long asioMessage(long selector, long value, void* message, double* opt) {
   switch (selector) {
-      
     case kAsioSelectorSupported: {
       switch (value) {
         case kAsioEngineVersion:
@@ -147,7 +170,7 @@ long asioMessage(long selector, long value, void* message, double* opt) {
       if (res == JNI_OK && env != NULL) {
         env->CallVoidMethod(
             jAsioDriver,
-            env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireResetRequest", "()V"));
+			fireResetRequestMid);
       }
       return 1L;
     }
@@ -158,7 +181,7 @@ long asioMessage(long selector, long value, void* message, double* opt) {
       if (res == JNI_OK && env != NULL) {
         env->CallVoidMethod(
             jAsioDriver,
-            env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireResyncRequest", "()V"));
+            fireResyncRequestMid);
       }
       return 1L;
     }
@@ -169,7 +192,7 @@ long asioMessage(long selector, long value, void* message, double* opt) {
       if (res == JNI_OK && env != NULL) {
         env->CallVoidMethod(
             jAsioDriver,
-            env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireBufferSizeChanged", "(I)V"),
+            fireBufferSizeChangedMid,
             (jint) value);
       }
       return 1L; // the request is always accepted
@@ -181,9 +204,9 @@ long asioMessage(long selector, long value, void* message, double* opt) {
       if (res == JNI_OK && env != NULL) {
         env->CallVoidMethod(
             jAsioDriver,
-            env->GetMethodID(env->FindClass("com/synthbot/jasiohost/AsioDriver"), "fireLatenciesChanged", "(II)V"),
-            Java_com_synthbot_jasiohost_AsioDriver_ASIOGetLatencies(NULL, NULL, JNI_TRUE),
-            Java_com_synthbot_jasiohost_AsioDriver_ASIOGetLatencies(NULL, NULL, JNI_FALSE));
+			fireLatenciesChangedMid,
+            Java_com_synthbot_jasiohost_AsioDriver_ASIOGetLatencies(env, NULL, JNI_TRUE),
+            Java_com_synthbot_jasiohost_AsioDriver_ASIOGetLatencies(env, NULL, JNI_FALSE));
       }
       return 1L;
     }
