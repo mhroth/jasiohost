@@ -20,7 +20,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <conio.h>
 #include "asiosys.h"
 #include "asio.h"
 #include "asiodrivers.h"
