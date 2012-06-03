@@ -1,7 +1,7 @@
 Welcome to the JAsioHost wiki!
 
 # Getting Started
-Place `JAsioHost.jar` into your classpath and `jasiohost.dll` into `C:\WINDOWS\system32`. The basic design pattern for using `JAsioHost` is as follows. `static` methods in `AsioDriver` are used to collect information about the available drivers. `getDriver` is called in order to load and instantiate a given driver. The `AsioDriver` can then be queried for channel state information. Audio buffers are created using @createBuffers@, before `start` is called. Callbacks are made from the driver to registered `AsioDriverListener` objects in order to submit input and retrieve output.
+Place `JAsioHost.jar` into your classpath and `jasiohost.dll` into `C:\WINDOWS\system32`. The basic design pattern for using `JAsioHost` is as follows. `static` methods in `AsioDriver` are used to collect information about the available drivers. `getDriver` is called in order to load and instantiate a given driver. The `AsioDriver` can then be queried for channel state information. Audio buffers are created using `createBuffers`, before `start` is called. Callbacks are made from the driver to registered `AsioDriverListener` objects in order to submit input and retrieve output.
 
 ```Java
 // get a list of available ASIO drivers
@@ -38,6 +38,9 @@ Note that you can only load one ASIO driver at time. This is a limitation of the
 ## Note on Compilation
 If you are brave enough to try to compile the native component, please note the following helpful tips.
 
+* You must [download](http://www.steinberg.net/en/company/developer.html) your own copy of the ASIO library. It cannot be distributed here due to licensing restrictions by Steinberg.
+
+In the ASIO library,
 * `./common/asiodrvr.cpp` is not necessary. Rename or remove it.
 * `./common/dllentry.cpp` is not necessary. Rename or remove it.
 * Line 219 of `./common/combase.h`, `#if WINVER < 0x0501`, should be replaced with `#if 0`. See [here](http://osdir.com/ml/audio.portaudio.devel/2006-09/msg00058.html) for more information.
