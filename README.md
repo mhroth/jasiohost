@@ -32,6 +32,8 @@ try {
 AsioDriver.shutdownAndUnloadDriver();
 ```
 
+See the [ExampleHost](https://github.com/mhroth/jasiohost/blob/master/src/com/synthbot/jasiohost/ExampleHost.java) for more details. It also contains a `main` function with a minimum GUI for selecting available drivers.
+
 Note that you can only load one ASIO driver at time. This is a limitation of the original API (AFAIK).
 
 
