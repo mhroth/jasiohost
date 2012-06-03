@@ -1,5 +1,5 @@
 # About JAsioHost
-JAsioHost is a Java interface to Steinberg's Audio Stream Input/Output (ASIO) API. It provides low-latecy (< 10ms) input and output access to the available audio hardware, replacing the need to use the outdated and slow Java Sound API.
+JAsioHost is a Java interface to Steinberg's [Audio Stream Input/Output](http://en.wikipedia.org/wiki/Audio_Stream_Input/Output) (ASIO) API. It provides low-latecy (< 10ms) input and output access to the available audio hardware, replacing the need to use the outdated and slow Java Sound API.
 
 # Getting Started
 Place `JAsioHost.jar` into your classpath and `jasiohost.dll` into `C:\WINDOWS\system32`. The basic design pattern for using `JAsioHost` is as follows. `static` methods in `AsioDriver` are used to collect information about the available drivers. `getDriver` is called in order to load and instantiate a given driver. The `AsioDriver` can then be queried for channel state information. Audio buffers are created using `createBuffers`, before `start` is called. Callbacks are made from the driver to registered `AsioDriverListener` objects in order to submit input and retrieve output.
