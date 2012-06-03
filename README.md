@@ -63,3 +63,11 @@ JAsioHost is released under the [Lesser Gnu Public License](http://www.gnu.org/l
 
 # Contact
 My name is Martin Roth. I am the author of JAsioHost. Please feel free to contact me with any questions or comments at [mhroth+jasiohost@gmail.com](mailto:mhroth+jasiohost@gmail.com).
+
+
+# Acknowledgements
+Many thanks to the following people for making JAsioHost possible:
+* [Steinberg](http://www.steinberg.net/en/home.html) for releasing ASIO and making good documentation! Of course the ASIO API belongs to them, and if you want to be able to compile the native source then you will need to [get the ASIO component](http://www.steinberg.net/en/company/3rd_party_developer.html) from them.
+* This project depends on [IASIOThisCallResolver](http://www.audiomulch.com/~rossb/code/calliasio/). Without it, this project would not be possible. All hail IASIOThisCallResolver. P.S. The reason for this is that I use Cygwin, gcc, MinGW in order to build the native component, not Visual Studio.
+* Steve Taylor of [http://toot.org.uk](http://toot.org.uk) for his help in testing out various ASIO drivers and assisting in the debugging process.
+* Carl Janson of [HD Sound Lab](hdsoundlab.com) for his effort in compiling a 64-bit version of the native library.
