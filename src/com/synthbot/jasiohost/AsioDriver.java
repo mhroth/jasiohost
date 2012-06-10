@@ -1,5 +1,5 @@
 /*
- *  Copyright 2009,2010 Martin Roth (mhroth@gmail.com)
+ *  Copyright 2009,2010,2012 Martin Roth (mhroth@gmail.com)
  * 
  *  This file is part of JAsioHost.
  *
@@ -653,11 +653,16 @@ public class AsioDriver {
   }
   
   private void fireBufferSwitch(long systemTime, long samplePosition, int bufferIndex) {
-    for (AsioChannel channelInfo : activeChannels) {
-      channelInfo.setBufferIndex(bufferIndex);
+    // NOTE(mhroth): use a standard for loop in order to avoid implicitly creating iterator objects
+    // as this function is called very often
+    for (int i = 0; i < inputChannels.length; ++i) {
+      if (inputChannels[i].isActive()) inputChannels[i].setBufferIndex(bufferIndex);
     }
-    for (AsioDriverListener listener : listeners) {
-      listener.bufferSwitch(systemTime, samplePosition, activeChannels);
+    for (int i = 0; i < outputChannels.length; ++i) {
+      if (outputChannels[i].isActive()) outputChannels[i].setBufferIndex(bufferIndex);
+    }
+    for (int i = 0; i < listeners.size(); ++i) {
+      listeners.get(i).bufferSwitch(systemTime, samplePosition, activeChannels);
     }
   }
 }
