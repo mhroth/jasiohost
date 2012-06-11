@@ -1,8 +1,22 @@
 # About JAsioHost
-JAsioHost is a Java interface to Steinberg's [Audio Stream Input/Output](http://en.wikipedia.org/wiki/Audio_Stream_Input/Output) (ASIO) API. It provides low-latecy (< 10ms) input and output access to the available audio hardware on Windows, replacing the need to use the outdated and slow Java Sound API.
+JAsioHost (JAH) is a Java interface to Steinberg's [Audio Stream Input/Output](http://en.wikipedia.org/wiki/Audio_Stream_Input/Output) (ASIO) API. It provides low-latecy (< 10ms) input and output access to the available audio hardware on **Windows**, replacing the need to use the outdated and slow Java Sound API.
+
 
 ## Getting Started
-Place `JAsioHost.jar` into your classpath and `jasiohost.dll` into `C:\WINDOWS\system32`. The basic design pattern for using `JAsioHost` is as follows. `static` methods in `AsioDriver` are used to collect information about the available drivers. `getDriver` is called in order to load and instantiate a given driver. The `AsioDriver` can then be queried for channel state information. Audio buffers are created using `createBuffers`, before `start` is called. Callbacks are made from the driver to registered `AsioDriverListener` objects in order to submit input and retrieve output.
+JAsioHost comes in two parts, `JAsioHost.jar` and `libjasiohost.dll`. The former is the usual encapsulation of the classes comprising the JAH Java library, and the latter is the JAH interface to ASIO. The package of JAH is `com.synthbot.jasiohost`.
+
+The library can be quickly tested from the root directory of the project with `java -jar JAsioHost.jar -Djava.library.path=./`. The `ExampleHost` will launch a small GUI allowing you to select an available ASIO driver and use it to play a 440Hz tone. If you're not sure if you have the correct ASIO driver installed (usually soundcard-specific), then try using the excellent [ASIO4ALL](http://www.asio4all.com/) Universal ASIO Driver For WDM Audio.
+
++ Include `JAsioHost.jar` in your Java project.
++ Make `libjasiohost.dll` available to your project. This can be done in several ways:
+  + Move or copy the library to `C:\WINDOWS\system32`. This is the default search location for JNI libraries.
+  + Inform the JVM where the library is located. This can be done with, e.g. `java -Djava.library.path=C:\WINDOWS\system32`
+
+If the JVM cannot find the dll, an [UnsatisfiedLinkError](http://docs.oracle.com/javase/1.4.2/docs/api/java/lang/UnsatisfiedLinkError.html) exception will be thrown.
+
+
+## Example
+The basic design pattern for using `JAsioHost` is as follows. `static` methods in `AsioDriver` are used to collect information about the available drivers. `getDriver` is called in order to load and instantiate a given driver. The `AsioDriver` can then be queried for channel state information. Audio buffers are created using `createBuffers`, before `start` is called. Callbacks are made from the driver to registered `AsioDriverListener` objects in order to submit input and retrieve output.
 
 ```Java
 // get a list of available ASIO drivers
