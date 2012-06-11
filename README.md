@@ -3,12 +3,12 @@ JAsioHost (JAH) is a Java interface to Steinberg's [Audio Stream Input/Output](h
 
 
 ## Getting Started
-JAsioHost comes in two parts, `JAsioHost.jar` and `libjasiohost.dll`. The former is the usual encapsulation of the classes comprising the JAH Java library, and the latter is the JAH interface to ASIO. The package of JAH is `com.synthbot.jasiohost`.
+JAsioHost comes in two parts, `JAsioHost.jar` and `jasiohost.dll`. The former is the usual encapsulation of the classes comprising the JAH Java library, and the latter is the JAH interface to ASIO. The package of JAH is `com.synthbot.jasiohost`.
 
 The library can be quickly tested from the root directory of the project with `java -jar JAsioHost.jar -Djava.library.path=./`. The `ExampleHost` will launch a small GUI allowing you to select an available ASIO driver and use it to play a 440Hz tone. If you're not sure if you have the correct ASIO driver installed (usually soundcard-specific), then try using the excellent [ASIO4ALL](http://www.asio4all.com/) Universal ASIO Driver For WDM Audio.
 
 + Include `JAsioHost.jar` in your Java project.
-+ Make `libjasiohost.dll` available to your project. This can be done in several ways:
++ Make `jasiohost.dll` available to your project. This can be done in several ways:
   + Move or copy the library to `C:\WINDOWS\system32`. This is the default search location for JNI libraries.
   + Inform the JVM where the library is located. This can be done with, e.g. `java -Djava.library.path=C:\WINDOWS\system32`
 
@@ -53,8 +53,9 @@ Note that you can only load one ASIO driver at time. This is a limitation of the
 
 
 ## Note on Compilation
-If you are brave enough to try to compile the native component, please note the following helpful tips.
+If you are brave enough to try to compile the native component, please note the following helpful tips:
 
+* I use [Cygwin](http://www.cygwin.com/) to compile the library, and not Visual Studio. Because I am more familiar with the Unix toolchain. This makes some things more difficult. Unfortunate, but so be it.
 * You must [download](http://www.steinberg.net/en/company/developer.html) your own copy of the ASIO library. It cannot be distributed here due to licensing restrictions by Steinberg.
 
 In the ASIO library,
