@@ -25,6 +25,16 @@ List<String> driverNameList = AsioDriver.getDriverNames();
 // load the names ASIO driver
 AsioDriver asioDriver = AsioDriver.getDriver(driverNameList.get(0));
 
+// add an AsioDriverListener in order to receive callbacks from the driver
+asioDriver.addAsioDriverListener(new AsioDriverListener() {
+  @Override
+  public void bufferSwitch(long systemTime, long samplePosition, Set<AsioChannel> channels) {
+    // fill in audio buffers here
+  }
+  
+  // implement remaining AudioDriverListener interface functions
+}
+
 // create a Set of AsioChannels, defining which input and output channels will be used
 Set<AsioChannel> activeChannels = new HashSet<AsioChannel>();
 
