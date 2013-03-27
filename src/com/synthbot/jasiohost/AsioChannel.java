@@ -204,7 +204,7 @@ public class AsioChannel {
           int sampleValueInt = (int) (sampleValue * MAX_INT24);
           outputBuffer.put((byte) (sampleValueInt & 0xFF));
           outputBuffer.put((byte) ((sampleValueInt >> 8) & 0xFF));
-          outputBuffer.put((byte) ((sampleValueInt >> 16) & 0xFF));          
+          outputBuffer.put((byte) ((sampleValueInt >> 16) & 0xFF));
         }
         break;
       }
@@ -292,7 +292,7 @@ public class AsioChannel {
       }
       case ASIOSTInt24MSB: {
         for (int i = 0; i < input.length; i++) {
-          int sampleValueInt = ((int) inputBuffer.get()) & 0xFF; sampleValueInt <<= 8;
+          int sampleValueInt = ((int) inputBuffer.get()) & 0xFFFF; sampleValueInt <<= 8;
           sampleValueInt |= ((int) inputBuffer.get()) & 0xFF; sampleValueInt <<= 8;
           sampleValueInt |= ((int) inputBuffer.get()) & 0xFF;
           input[i] = ((float) sampleValueInt) / MAX_INT24;          
@@ -303,7 +303,7 @@ public class AsioChannel {
         for (int i = 0; i < input.length; i++) {
           int sampleValueInt = ((int) inputBuffer.get()) & 0xFF;
           sampleValueInt |= (((int) inputBuffer.get()) & 0xFF) << 8;
-          sampleValueInt |= (((int) inputBuffer.get()) & 0xFF) << 16;
+          sampleValueInt |= (((int) inputBuffer.get()) & 0xFFFF) << 16;
           input[i] = ((float) sampleValueInt) / MAX_INT24;          
         }
         break;
