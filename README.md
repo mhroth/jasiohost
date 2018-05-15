@@ -86,10 +86,6 @@ An example of the latter is the absence of the `ASIOBufferInfo` structure in Jav
 JAsioHost is released under the [Lesser Gnu Public License](http://www.gnu.org/licenses/lgpl.html) (LGPL). Basically, the library stays open source, but you can use if for whatever you want, including closed source applications. You must publicly credit the use of this library.
 
 
-## Contact
-My name is Martin Roth. I am the author of JAsioHost. Please feel free to contact me with any questions or comments at [mhroth+jasiohost@gmail.com](mailto:mhroth+jasiohost@gmail.com).
-
-
 ## Acknowledgements
 Many thanks to the following people for making JAsioHost possible:
 * [Steinberg](http://www.steinberg.net/en/home.html) for releasing ASIO and making good documentation! Of course the ASIO API belongs to them, and if you want to be able to compile the native source then you will need to [get the ASIO component](http://www.steinberg.net/en/company/3rd_party_developer.html) from them.
